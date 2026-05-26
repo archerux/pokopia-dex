@@ -8,6 +8,8 @@ A mobile-first webapp companion guide for the Nintendo Switch 2 game **Pokémon 
 
 Owner: Lawrence (`ngo.lawrence@gmail.com`). Personal project, lives at `~/Projects/dev/personal/pokopia-dex/`. Public GitHub repo, deployed to Cloudflare Pages with auto-deploy from `main`.
 
+Live: https://pokopia-dex.pages.dev/
+
 ## Hard architectural constraints
 
 These were chosen deliberately. Don't change them without asking Lawrence first.
@@ -117,6 +119,7 @@ These are deliberate v1 cuts. When Lawrence raises any of them, prefer the small
 - **Don't add npm / a build step** without explicit approval.
 - **Don't introduce localStorage.** The app needs to work in environments where storage is denied (some `file://` contexts, private browsing). `sessionStorage` with try/catch is the chosen pattern.
 - **Don't use `innerHTML` with user/data-derived content.** Use the `el()` helper.
+- **Any new search/text input must include `'data-focus': '<unique-id>'`.** `render()` does a full DOM swap on every keystroke, so without the focus marker the input would unmount mid-type — on mobile this dismisses the soft keyboard after every letter. The focus-restoration logic in `render()` keys off `data-focus`.
 - **Verify changes by running the playwright smoke test** (it's not committed — write it inline in a bash call when needed). The pattern used in v1: navigate to list / detail / favorite-category in a 390×844 viewport, count rendered items, screenshot, eyeball.
 - **Commit messages:** plain English, present tense ("Add item search", not "Added item search"). No conventional-commits prefix required; keep it human.
 

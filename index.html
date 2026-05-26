@@ -215,6 +215,7 @@ function viewPokemonList() {
       el('input', {
         type: 'search', placeholder: 'Search by name, type, specialty…',
         value: state.search,
+        'data-focus': 'main-search',
         class: 'w-full px-3 py-2 rounded-lg bg-slate-800 text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-sky-500',
         oninput: e => { state.search = e.target.value; saveState(); render(); }
       }),
@@ -342,6 +343,7 @@ function viewFavoriteDetail(slug) {
     el('input', {
       type: 'search', placeholder: 'Filter items…',
       value: itemQuery,
+      'data-focus': 'item-filter',
       class: 'w-full mb-2 px-3 py-2 rounded-lg bg-slate-800 text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-sky-500',
       oninput: e => { state.itemQuery = e.target.value; render(); }
     }),
@@ -401,6 +403,7 @@ function viewFavoritesIndex() {
       el('input', {
         type: 'search', placeholder: 'Search categories…',
         value: state.favQuery || '',
+        'data-focus': 'fav-search',
         class: 'w-full px-3 py-2 rounded-lg bg-slate-800 text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-sky-500',
         oninput: e => { state.favQuery = e.target.value; render(); }
       })
@@ -496,9 +499,30 @@ function render() {
   else if (r.view === 'about') view = viewAbout();
   else view = viewPokemonList();
 
+  // Preserve focus + caret across the rebuild. Without this, typing into a search input would
+  // dismiss the on-screen keyboard on mobile after every keystroke: oninput → render() →
+  // replaceChildren() unmounts the focused <input>, so the new <input> in the next tree has no
+  // focus and the soft keyboard collapses. We tag each search input with data-focus="<id>" and
+  // re-focus the matching element in the new tree, also restoring selectionStart/End so the caret
+  // doesn't jump to the end of the value.
+  const focusEl = document.activeElement;
+  const focusKey = focusEl && focusEl.dataset ? focusEl.dataset.focus : null;
+  const selStart = focusKey ? focusEl.selectionStart : null;
+  const selEnd   = focusKey ? focusEl.selectionEnd   : null;
+
   const app = document.getElementById('app');
   app.replaceChildren(view);
-  // Scroll to top on route change
+
+  if (focusKey) {
+    const target = app.querySelector('[data-focus="' + focusKey + '"]');
+    if (target) {
+      target.focus({ preventScroll: true });
+      try { if (selStart != null) target.setSelectionRange(selStart, selEnd); }
+      catch (e) { /* type=search on some browsers rejects setSelectionRange — safe to ignore */ }
+    }
+  }
+
+  // Scroll to top on route change (but not on every render — would jank typing into a sticky search)
   if (!render._lastHash || render._lastHash !== location.hash) {
     window.scrollTo(0, 0);
     render._lastHash = location.hash;

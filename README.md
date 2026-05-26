@@ -6,7 +6,7 @@ Built as a single self-contained `index.html` with all data baked in. No backend
 
 ## Live site
 
-_Add your Cloudflare Pages URL here after deploying._
+https://pokopia-dex.pages.dev/
 
 ## What's in v1
 

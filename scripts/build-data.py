@@ -24,8 +24,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 XLSX = ROOT / "Pokopia Pokemon.xlsx"
 DEX_MAP_PATH = ROOT / "data" / "dex-map.json"
-SEREBII_CACHE = ROOT / "data" / "serebii-favorites.json"
-LITTER_CACHE  = ROOT / "data" / "serebii-litter.json"
+SEREBII_CACHE  = ROOT / "data" / "serebii-favorites.json"
+LITTER_CACHE   = ROOT / "data" / "serebii-litter.json"
+FLAVORS_CACHE  = ROOT / "data" / "serebii-flavors.json"
 HTML_PATH = ROOT / "index.html"
 
 # In-place replace strategy: only this <script> block in index.html is rewritten. UI code is
@@ -231,6 +232,94 @@ def scrape_litter(fav_cache: dict | None = None):
     return entries
 
 
+def scrape_flavors():
+    """Scrape https://www.serebii.net/pokemonpokopia/flavors.shtml.
+
+    Page layout: one big <table class="dextable"> with section-header rows that contain
+    <a name="<flavorSlug>"></a><h3>FlavorName</h3>, followed by item rows of the form
+        <tr><td class="cen"><img src="items/<slug>.png" alt="<Name>"></td>
+            <td class="cen">Name</td>
+            <td class="fooinfo">Description</td></tr>
+
+    The "No Flavor" bucket is treated as its own flavor named 'none' — useful for showing
+    universal foods on the detail drawer too if we ever want.
+    """
+    try:
+        import requests  # type: ignore
+        import html as html_mod
+    except ImportError:
+        sys.exit("`requests` is required to rescrape. Install with: pip install requests")
+
+    url = "https://www.serebii.net/pokemonpokopia/flavors.shtml"
+    print(f"Fetching {url}")
+    page = requests.get(url, timeout=30).text
+
+    # Narrow to the food table to avoid matching nav-img rows above.
+    start = page.lower().find('<h2>list of food')
+    if start < 0:
+        sys.exit("Could not find 'List of Food' header on flavors page — page structure changed?")
+    section = page[start:]
+    # Stop at the next <h2> or end-of-page.
+    end_h2 = re.search(r'<h2[^>]*>', section[100:], re.I)
+    if end_h2:
+        section = section[: 100 + end_h2.start()]
+
+    flavors = {}              # slug → {slug, displayName, items}
+    current = None            # current flavor slug while walking rows
+
+    rows = re.findall(r'<tr[^>]*>(.*?)</tr>', section, re.S | re.I)
+    for row in rows:
+        # Section header row carries the anchor name + an <h3>.
+        m_section = re.search(
+            r'<a\s+name="([a-z]+)"[^>]*>\s*</a>\s*<h3[^>]*>([^<]+)',
+            row, re.I,
+        )
+        if m_section:
+            slug = m_section.group(1).strip().lower()
+            # "general" is Serebii's anchor for the "No Flavor" bucket — store as 'none' so
+            # the spreadsheet's empty-flavor case can fall back to this if we want it later.
+            if slug == "general":
+                slug = "none"
+            name = html_mod.unescape(m_section.group(2).strip())
+            current = slug
+            flavors.setdefault(slug, {"slug": slug, "displayName": name, "items": []})
+            continue
+
+        if not current:
+            continue
+
+        m_item = re.search(
+            r'<img\s+src="items/([^"\.]+)\.png"[^>]*alt="([^"]+)"',
+            row, re.I,
+        )
+        if not m_item:
+            continue
+        item_slug = m_item.group(1).strip().lower()
+        item_name = html_mod.unescape(m_item.group(2).strip())
+        # Description is in the LAST <td>; strip tags, collapse whitespace, unescape entities.
+        tds = re.findall(r'<td[^>]*>(.*?)</td>', row, re.S | re.I)
+        desc = ""
+        if tds:
+            desc = re.sub(r'<[^>]+>', ' ', tds[-1])
+            desc = html_mod.unescape(re.sub(r'\s+', ' ', desc)).strip()
+            # The last <td> sometimes also includes the name cell content when the row uses
+            # fewer cells; if desc starts with the item name verbatim, trim it.
+            if desc.startswith(item_name):
+                desc = desc[len(item_name):].lstrip(' .')
+
+        # Avoid dupes (Rare Candy appears once with an anchor and once without in the raw HTML).
+        if any(it["slug"] == item_slug for it in flavors[current]["items"]):
+            continue
+        flavors[current]["items"].append({"slug": item_slug, "name": item_name, "desc": desc})
+
+    FLAVORS_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    with open(FLAVORS_CACHE, "w", encoding="utf-8") as f:
+        json.dump(flavors, f, indent=2, ensure_ascii=False)
+    n_items = sum(len(d["items"]) for d in flavors.values())
+    print(f"Wrote {FLAVORS_CACHE} ({len(flavors)} flavor sections, {n_items} food items)")
+    return flavors
+
+
 def base_name(raw: str) -> str:
     n = re.sub(r"\s*\(.*?\)\s*", "", raw)
     n = re.sub(r"\s*\*.*$", "", n)
@@ -241,7 +330,7 @@ def display_name(raw: str) -> str:
     return re.sub(r"\s*\*.*$", "", raw).strip()
 
 
-def build_data(pokemon, fav, litter_entries, dex_map):
+def build_data(pokemon, fav, litter_entries, flavors, dex_map):
     # Clean fav values
     for slug, d in fav.items():
         d["displayName"] = d["displayName"].strip()
@@ -344,6 +433,9 @@ def build_data(pokemon, fav, litter_entries, dex_map):
             for slug in fav
         },
         "litter": litter_items,
+        # flavors keyed by lowercase slug ('sweet','bitter','dry','sour','spicy','none').
+        # The UI looks this up by lowercasing the spreadsheet's p.flavor.
+        "flavors": flavors,
     }
 
 
@@ -364,6 +456,8 @@ def embed(data: dict):
     print(f"  Catalogued items: {sum(len(f['items']) for f in data['favorites'].values())}")
     print(f"  Litter items: {len(data['litter'])} "
           f"(dropped by {sum(len(li['pokemon']) for li in data['litter'].values())} Pokémon entries)")
+    print(f"  Flavor sections: {len(data['flavors'])} "
+          f"({sum(len(f['items']) for f in data['flavors'].values())} foods)")
 
 
 def main():
@@ -393,6 +487,17 @@ def main():
         else:
             print(f"Using cached litter data ({len(litter_entries)} entries). Pass --rescrape to refetch.")
 
+    # Flavors cache uses the same "blank to refresh" idiom as litter.
+    if args.rescrape or not FLAVORS_CACHE.exists():
+        flavors = scrape_flavors()
+    else:
+        flavors = json.loads(FLAVORS_CACHE.read_text(encoding="utf-8"))
+        if not flavors:
+            print("Cached flavors data is empty — rescraping.")
+            flavors = scrape_flavors()
+        else:
+            print(f"Using cached flavors data ({len(flavors)} sections). Pass --rescrape to refetch.")
+
     dex_map = json.loads(DEX_MAP_PATH.read_text(encoding="utf-8"))
     dex_map.pop("_comment", None)
 
@@ -401,7 +506,7 @@ def main():
     print(f"  {len(pokemon)} Pokémon rows")
 
     print("Building combined data…")
-    data = build_data(pokemon, fav, litter_entries, dex_map)
+    data = build_data(pokemon, fav, litter_entries, flavors, dex_map)
 
     print("Embedding into index.html…")
     embed(data)

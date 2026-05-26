@@ -34,6 +34,7 @@ If a future feature genuinely needs a framework or build step (e.g. complex stat
 ├── data/
 │   ├── serebii-favorites.json  Cached Serebii scrape (43 favorite categories)
 │   ├── serebii-litter.json     Cached Serebii scrape (Pokémon ↔ litter-item mappings)
+│   ├── serebii-flavors.json    Cached Serebii scrape (5 flavors + "No Flavor" → food items)
 │   └── dex-map.json            Pokémon name → national dex number (for sprites)
 └── scripts/
     └── build-data.py           Regenerates the embedded data inside index.html
@@ -41,12 +42,13 @@ If a future feature genuinely needs a framework or build step (e.g. complex stat
 
 ## Data pipeline
 
-`index.html` carries one embedded `<script id="pokopia-data" type="application/json">…</script>` block. `scripts/build-data.py` rewrites just that block from four inputs:
+`index.html` carries one embedded `<script id="pokopia-data" type="application/json">…</script>` block. `scripts/build-data.py` rewrites just that block from five inputs:
 
 1. **`Pokopia Pokemon.xlsx`** — `# / Name / Type / Specialty / Location / Ideal Habitat / Favourite 1-5 / Flavor`. ~311 rows including form variants (e.g. Toxtricity x2) and event Pokémon (E1–E4).
 2. **`data/serebii-favorites.json`** — cached scrape of 43 pages under `https://www.serebii.net/pokemonpokopia/favorites/<slug>.shtml`. Each page lists qualifying items for one favorite category.
 3. **`data/serebii-litter.json`** — cached scrape of `https://www.serebii.net/pokemonpokopia/litter.shtml`. Single page; each row pairs one Pokémon (with the Litter specialty) to one item it drops. Item slugs come from the `<img src="items/<slug>.png">` filename — authoritative because Serebii's item-cell has no anchor. The build script also builds a reverse index `data.litter` so the Items tab can list "who drops Honey" in one lookup. Name mismatches between Serebii and the spreadsheet are normalized via `LITTER_NAME_ALIASES` (e.g. Serebii's "Paldean Wooper" → spreadsheet's "P-Wooper").
-4. **`data/dex-map.json`** — hand-maintained map from Pokémon name → national-dex number, needed to build PokéAPI sprite URLs.
+4. **`data/serebii-flavors.json`** — cached scrape of `https://www.serebii.net/pokemonpokopia/flavors.shtml`. Single page divided into 6 sections (Bitter/Dry/Sour/Spicy/Sweet/No Flavor) with the foods that match each flavor. Same image-filename-as-slug trick as litter. Keyed by lowercase flavor slug; Serebii's "general" anchor is stored as `none` so the spreadsheet's "Neutral" flavor (and empty-string case) can be folded to it via `flavorSlug()` in the UI.
+5. **`data/dex-map.json`** — hand-maintained map from Pokémon name → national-dex number, needed to build PokéAPI sprite URLs.
 
 Run:
 
@@ -102,7 +104,7 @@ When iterating: edit `index.html` (or the data sources + re-run `build-data.py`)
 
 ## What's done in v1
 
-Primary lookup flow is complete: list Pokémon → see specialty/habitat/location/flavor/favorites/litter → tap a favorite category → see qualifying items + which other Pokémon like that category. Items tab also has a "Litter Drops" section: pick a litter item to see every Pokémon that drops it. Filters: free-text search + a collapsible drawer for habitat/specialty selects (with active-filter count badge on the toggle). Habitats browse grid. Bottom nav with four tabs (active tab uses a soft green pill behind the icon). Pokopia-branded light theme — cream parchment background, grass-green accents, Fredoka/Nunito typography from Google Fonts, official Pokopia logo hotlinked into the home header with a CSS-wordmark fallback. About page credits Serebii, PokéAPI, and the official Pokémon Pokopia site with a fan-project disclaimer.
+Primary lookup flow is complete: list Pokémon → see specialty/habitat/location/flavor/favorites/litter → tap a favorite category → see qualifying items + which other Pokémon like that category. On Pokémon detail pages, the "Favorite flavor" row expands an inline drawer with all foods of that flavor (with images). Items tab has three sections: Litter Drops (item → who drops it), Flavors (flavor → matching foods), and Favorite Categories (existing). Filters on the Pokémon list: free-text search + a collapsible drawer for habitat/specialty selects (with active-filter count badge on the toggle). Habitats browse grid. Bottom nav with four tabs (active tab uses a soft green pill behind the icon). Pokopia-branded light theme — cream parchment background, grass-green accents, Fredoka/Nunito typography from Google Fonts, official Pokopia logo hotlinked into the home header with a CSS-wordmark fallback. About page credits Serebii, PokéAPI, and the official Pokémon Pokopia site with a fan-project disclaimer.
 
 ## Known gaps & likely next asks
 

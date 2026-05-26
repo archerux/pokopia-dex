@@ -1,0 +1,263 @@
+{
+  "none": {
+    "slug": "none",
+    "displayName": "No Flavor",
+    "items": [
+      {
+        "slug": "leppaberry",
+        "name": "Leppa Berry",
+        "desc": "A berry with a rather unremarkable flavor. Restores some PP when eaten."
+      },
+      {
+        "slug": "lumberry",
+        "name": "Lum Berry",
+        "desc": "A berry that has a well-balanced flavor. Restores some PP when eaten."
+      },
+      {
+        "slug": "simplesalad",
+        "name": "Simple salad",
+        "desc": "An ordinary salad made with leaves. Powers up Leafage when eaten."
+      },
+      {
+        "slug": "simplesoup",
+        "name": "Simple soup",
+        "desc": "An ordinary soup made with Fresh Water. Powers up Water Gun when eaten."
+      },
+      {
+        "slug": "simplebread",
+        "name": "Simple bread",
+        "desc": "Ordinary wheat bread. Powers up Cut when eaten."
+      },
+      {
+        "slug": "simplehamburgersteak",
+        "name": "Simple hamburger steak",
+        "desc": "An ordinary hamburger steak, made with beans. Powers up Rock Smash when eaten."
+      },
+      {
+        "slug": "vibranthamburgersteak",
+        "name": "Vibrant hamburger steak",
+        "desc": "A hamburger steak made with lots of ingredients. Powers up Rock Smash a lot when eaten"
+      },
+      {
+        "slug": "freshwater",
+        "name": "Fresh Water",
+        "desc": "Delicious water that's perfect for making soup. Drink some and spit it out to make things wet."
+      },
+      {
+        "slug": "bruisedberry",
+        "name": "Bruised berry",
+        "desc": "A bruised berry you got from Chef Dente. Restores a bit of PP when eaten"
+      },
+      {
+        "slug": "curryandrice",
+        "name": "Curry and rice",
+        "desc": "An absolutely essential meal for any party. Enjoy some tasty food alongside other Pokémon!"
+      }
+    ]
+  },
+  "bitter": {
+    "slug": "bitter",
+    "displayName": "Bitter",
+    "items": [
+      {
+        "slug": "rawstberry",
+        "name": "Rawst Berry",
+        "desc": "The longer and more curled the leaves are, the more bitter this berry tastes. Restores some PP when eaten"
+      },
+      {
+        "slug": "potato",
+        "name": "Potato",
+        "desc": "A delicious potato-even with the skin still on! Restores some PP when eaten"
+      },
+      {
+        "slug": "seaweed",
+        "name": "Seaweed",
+        "desc": "that has washed ashore. Restores some PP when eaten"
+      },
+      {
+        "slug": "seaweedsalad",
+        "name": "Seaweed salad",
+        "desc": "A bitter-tasting salad made with seaweed. Powers up Leafage when eaten."
+      },
+      {
+        "slug": "seaweedsoup",
+        "name": "Seaweed soup",
+        "desc": "A bitter-tasting soup made with seaweed.. Powers up Water Gun when eaten."
+      },
+      {
+        "slug": "recycledbread",
+        "name": "Recycled bread",
+        "desc": "Bitter-tasting bread made by reusing other bread. Powers up Cut when eaten"
+      },
+      {
+        "slug": "bitterhamburgersteak",
+        "name": "Bitter hamburger steak",
+        "desc": "A bitter-tasting hamberuger steak topped with leaves. Powers up Rock Smash when eaten"
+      }
+    ]
+  },
+  "dry": {
+    "slug": "dry",
+    "displayName": "Dry",
+    "items": [
+      {
+        "slug": "chestoberry",
+        "name": "Chesto Berry",
+        "desc": "A rock-hard berry with a dry flavor. Restores some PP when eaten"
+      },
+      {
+        "slug": "wheat",
+        "name": "Wheat",
+        "desc": "They're actually edible raw! Restores some PP when eaten."
+      },
+      {
+        "slug": "cavemushrooms",
+        "name": "Cave mushrooms",
+        "desc": "Mushrooms that grow in damp places such as caves or under shady trees. Restores some PP when eaten"
+      },
+      {
+        "slug": "crushed-berrysalad",
+        "name": "Crushed-berry salad",
+        "desc": "A salad with a dry flavor, made with crushed Chesto Berries. Powers up Leafage when eaten."
+      },
+      {
+        "slug": "mushroomsoup",
+        "name": "Mushroom soup",
+        "desc": "A soup with a dry flavor made with mushroom broth.. Powers up Water Gun when eaten."
+      },
+      {
+        "slug": "mushroomhamburgersteak",
+        "name": "Mushroom hamburger steak",
+        "desc": "A hamburger steak with an intensely dry, mushroomy flavor. Powers up Rock Smash when eaten."
+      },
+      {
+        "slug": "roseradetea",
+        "name": "Roserade Tea",
+        "desc": "Tea with a delicate, elegant aroma. If you take a sip and spit it out, it becomes a hot spring!"
+      }
+    ]
+  },
+  "sour": {
+    "slug": "sour",
+    "displayName": "Sour",
+    "items": [
+      {
+        "slug": "aspearberry",
+        "name": "Aspear Berry",
+        "desc": "This berry has a distinctively sharp sour taste. Restores some PP when eaten."
+      },
+      {
+        "slug": "tomato",
+        "name": "Tomato",
+        "desc": "A round, tasty-looking tomato. Restores some PP when eaten"
+      },
+      {
+        "slug": "shreddedsalad",
+        "name": "Shredded salad",
+        "desc": "A sour salad made with finely chopped leaves. Powers up Leafage when eaten."
+      },
+      {
+        "slug": "flavorfulsoup",
+        "name": "Flavorful soup",
+        "desc": "A sour soup bursting with flavor. Powers up Water Gun when eaten."
+      },
+      {
+        "slug": "leppabread",
+        "name": "Leppa bread",
+        "desc": "Sour-tasting bread made with Leppa Berry jam.. Powers up Cut when eaten."
+      },
+      {
+        "slug": "tomatohamburgersteak",
+        "name": "Tomato hamburger steak",
+        "desc": "A hamburger steak that brings out the sour flavor of its ingredients.. Powers up Rock Smash when eaten."
+      },
+      {
+        "slug": "sodapop",
+        "name": "Soda Pop",
+        "desc": "Fizzy, sparkling soda. If you take a sip and spit it out, it becomes seawater"
+      }
+    ]
+  },
+  "spicy": {
+    "slug": "spicy",
+    "displayName": "Spicy",
+    "items": [
+      {
+        "slug": "freshcarrot",
+        "name": "Fresh carrot",
+        "desc": "You can harvest these spicy carrots by pulling up on their leaves. Restores some PP when eaten."
+      },
+      {
+        "slug": "croutonsalad",
+        "name": "Crouton salad",
+        "desc": "A spicy salad with a delightfully crunchy texture. Powers up Leafage when eaten."
+      },
+      {
+        "slug": "electrifyingsoup",
+        "name": "Electrifying soup",
+        "desc": "A shockingly spicy soup.. Powers up Water Gun when eaten."
+      },
+      {
+        "slug": "healthysoup",
+        "name": "Healthy soup",
+        "desc": "A spicy soup with an aromatic bean flavor.. Powers up Water Gun when eaten."
+      },
+      {
+        "slug": "carrotbread",
+        "name": "Carrot bread",
+        "desc": "Spicy bread with an intense carrot flavor. Powers up Cut when eaten."
+      },
+      {
+        "slug": "breadbowl",
+        "name": "Bread bowl",
+        "desc": "Spicy bread that's delicious even when burnt. Powers up Cut when eaten."
+      },
+      {
+        "slug": "chilisauce",
+        "name": "Chili sauce",
+        "desc": "Sauce with an enticingly spicy flavor. If you take a sip and spit it out, it becomes lava!"
+      }
+    ]
+  },
+  "sweet": {
+    "slug": "sweet",
+    "displayName": "Sweet",
+    "items": [
+      {
+        "slug": "pechaberry",
+        "name": "Pecha Berry",
+        "desc": "A sweet, delicious berry. Restores some PP when eaten."
+      },
+      {
+        "slug": "bean",
+        "name": "Bean",
+        "desc": "Small beans that are jam-packed with nutrients. Restores some PP when eaten"
+      },
+      {
+        "slug": "leppasalad",
+        "name": "Leppa salad",
+        "desc": "A sweet salad made with Leppa Berries. Powers up Leafage when eaten."
+      },
+      {
+        "slug": "fluffybread",
+        "name": "Fluffy bread",
+        "desc": "Sweet bread made with Pecha Berries. Powers up cut when eaten."
+      },
+      {
+        "slug": "potatohamburgersteak",
+        "name": "Potato hamburger steak",
+        "desc": "A satisfyingly sweet hamburger steak. Powers up Rock Smash a lot when eaten."
+      },
+      {
+        "slug": "moomoomilkcoffee",
+        "name": "Moomoo Milk Coffee",
+        "desc": "Milky coffee with a comfortingly sweet taste. If you take a sip and spit it out, it becomes muddy water!"
+      },
+      {
+        "slug": "commoncandy",
+        "name": "Common candy",
+        "desc": "A piece of candy you got from Chef Dente. Restores some PP when eaten."
+      }
+    ]
+  }
+}

@@ -1,0 +1,172 @@
+[
+  {
+    "pokemon": "Venusaur",
+    "item": "Leaf",
+    "slug": "leaf"
+  },
+  {
+    "pokemon": "Vileplume",
+    "item": "Leaf",
+    "slug": "leaf"
+  },
+  {
+    "pokemon": "Bellsprout",
+    "item": "Vine Rope",
+    "slug": "vinerope"
+  },
+  {
+    "pokemon": "Weepinbell",
+    "item": "Vine Rope",
+    "slug": "vinerope"
+  },
+  {
+    "pokemon": "Tangela",
+    "item": "Vine Rope",
+    "slug": "vinerope"
+  },
+  {
+    "pokemon": "Tangrowth",
+    "item": "Vine Rope",
+    "slug": "vinerope"
+  },
+  {
+    "pokemon": "Cacturne",
+    "item": "Sturdy Stick",
+    "slug": "sturdystick"
+  },
+  {
+    "pokemon": "Combee",
+    "item": "Honey",
+    "slug": "honey"
+  },
+  {
+    "pokemon": "Haxorus",
+    "item": "Small log",
+    "slug": "smalllog"
+  },
+  {
+    "pokemon": "Grimer",
+    "item": "Nonburnable Garbage",
+    "slug": "nonburnablegarbage"
+  },
+  {
+    "pokemon": "Muk",
+    "item": "Nonburnable Garbage",
+    "slug": "nonburnablegarbage"
+  },
+  {
+    "pokemon": "Blissey",
+    "item": "Stone",
+    "slug": "stone"
+  },
+  {
+    "pokemon": "Spinarak",
+    "item": "Twine",
+    "slug": "twine"
+  },
+  {
+    "pokemon": "Ariados",
+    "item": "Twine",
+    "slug": "twine"
+  },
+  {
+    "pokemon": "Mareep",
+    "item": "Fluff",
+    "slug": "fluff"
+  },
+  {
+    "pokemon": "Flaaffy",
+    "item": "Fluff",
+    "slug": "fluff"
+  },
+  {
+    "pokemon": "Paldean Wooper",
+    "item": "Squishy Clay",
+    "slug": "squishyclay"
+  },
+  {
+    "pokemon": "Clodsire",
+    "item": "Squishy Clay",
+    "slug": "squishyclay"
+  },
+  {
+    "pokemon": "Garbodor",
+    "item": "Nonburnable Garbage",
+    "slug": "nonburnablegarbage"
+  },
+  {
+    "pokemon": "Larvesta",
+    "item": "Twine",
+    "slug": "twine"
+  },
+  {
+    "pokemon": "Volcarona",
+    "item": "Twine",
+    "slug": "twine"
+  },
+  {
+    "pokemon": "Glimmet",
+    "item": "Iron Ore",
+    "slug": "ironore"
+  },
+  {
+    "pokemon": "Glimmora",
+    "item": "Iron Ore",
+    "slug": "ironore"
+  },
+  {
+    "pokemon": "Trapinch",
+    "item": "Squishy Clay",
+    "slug": "squishyclay"
+  },
+  {
+    "pokemon": "Swablu",
+    "item": "Fluff",
+    "slug": "fluff"
+  },
+  {
+    "pokemon": "Altaria",
+    "item": "Fluff",
+    "slug": "fluff"
+  },
+  {
+    "pokemon": "Snivy",
+    "item": "Vine Rope",
+    "slug": "vinerope"
+  },
+  {
+    "pokemon": "Servine",
+    "item": "Vine Rope",
+    "slug": "vinerope"
+  },
+  {
+    "pokemon": "Serperior",
+    "item": "Vine Rope",
+    "slug": "vinerope"
+  },
+  {
+    "pokemon": "Rampardos",
+    "item": "Stone",
+    "slug": "stone"
+  },
+  {
+    "pokemon": "Bastiodon",
+    "item": "Stone",
+    "slug": "stone"
+  },
+  {
+    "pokemon": "Tyrantrum",
+    "item": "Stone",
+    "slug": "stone"
+  },
+  {
+    "pokemon": "Aurorus",
+    "item": "Stone",
+    "slug": "stone"
+  },
+  {
+    "pokemon": "Jumpluff",
+    "item": "Fluff",
+    "slug": "fluff"
+  }
+]

@@ -3,11 +3,12 @@
 Rebuild the embedded data inside index.html from sources:
   - "Pokopia Pokemon.xlsx" (Pokémon list — sheet "All Pokemon")
   - data/serebii-favorites.json (cached item lists per favorite category)
+  - data/serebii-litter.json (cached list of Pokémon ↔ litter item mappings)
   - data/dex-map.json (Pokémon name → national dex number, for sprite URLs)
 
 Usage:
   python scripts/build-data.py
-  python scripts/build-data.py --rescrape   # refetch Serebii favorite pages and update cache
+  python scripts/build-data.py --rescrape   # refetch Serebii pages (favorites + litter) and update cache
 
 When the game updates:
   1. Update the .xlsx with new Pokémon / changes
@@ -24,6 +25,7 @@ ROOT = Path(__file__).resolve().parent.parent
 XLSX = ROOT / "Pokopia Pokemon.xlsx"
 DEX_MAP_PATH = ROOT / "data" / "dex-map.json"
 SEREBII_CACHE = ROOT / "data" / "serebii-favorites.json"
+LITTER_CACHE  = ROOT / "data" / "serebii-litter.json"
 HTML_PATH = ROOT / "index.html"
 
 # In-place replace strategy: only this <script> block in index.html is rewritten. UI code is
@@ -54,6 +56,12 @@ SPECIALTY_FIX = {
     "Teleportort": "Teleport",
     "Rain?": "Rain",
     "???": "Unknown",
+}
+
+# Litter table on Serebii uses different display names for some Pokémon than the spreadsheet.
+# Maps Serebii name → spreadsheet displayName so we can match the litter entry to the row.
+LITTER_NAME_ALIASES = {
+    "Paldean Wooper": "P-Wooper",
 }
 
 
@@ -152,6 +160,77 @@ def scrape_serebii():
     return out
 
 
+def scrape_litter(fav_cache: dict | None = None):
+    """Scrape https://www.serebii.net/pokemonpokopia/litter.shtml.
+
+    Each row in Serebii's "List of Litter" table maps one Pokémon to one item it drops.
+    Raw HTML format (post-table-header):
+      <tr>
+        <td>#003</td>
+        <td>...<a href=".../pokedex/venusaur.shtml"><img alt="Venusaur Image"></a></td>
+        <td>...<a href=".../pokedex/venusaur.shtml"><u>Venusaur</u></a></td>
+        <td>...specialty mini-table...</td>
+        <td><img src="items/leaf.png" alt="Leaf" /><br />Leaf</td>
+      </tr>
+
+    The item cell has NO anchor — the authoritative slug comes from the image filename
+    `items/<slug>.png` (matches our ITEM_IMG() runtime hotlink). The name link wraps the text
+    in <u> tags, which an earlier version of this regex missed.
+    """
+    try:
+        import requests  # type: ignore
+    except ImportError:
+        sys.exit("`requests` is required to rescrape. Install with: pip install requests")
+
+    url = "https://www.serebii.net/pokemonpokopia/litter.shtml"
+    print(f"Fetching {url}")
+    html = requests.get(url, timeout=30).text
+
+    # Each outer <tr> contains a nested specialty mini-table (<table align="center">…</table>) with
+    # its own <tr>s. Without stripping it, the non-greedy outer-<tr> regex closes on the inner
+    # </tr> and we never reach the item cell. The outer "List of Litter" table uses class="tab",
+    # so the inner ones are uniquely identifiable as <table align="center"> without that class.
+    html_flat = re.sub(r'<table align="center"[^>]*>.*?</table>', ' ', html, flags=re.S | re.I)
+
+    entries = []
+    seen = set()  # de-dupe rows in case Serebii ever lists the same pair twice
+    rows = re.findall(r'<tr[^>]*>(.*?)</tr>', html_flat, re.S | re.I)
+    for row in rows:
+        # Pokémon: <a href="/pokemonpokopia/pokedex/<slug>.shtml"><u>Name</u></a>
+        # The first link in the row is the image link; the second is the name (with <u>).
+        # We want the one that wraps text, so prefer the <u>-wrapped capture.
+        m_p = re.search(
+            r'href="[^"]*pokemonpokopia/pokedex/[a-z]+\.shtml"[^>]*>\s*<u>([^<]+)</u>',
+            row, re.I,
+        )
+        if not m_p:
+            continue
+        pokemon_name = re.sub(r'\s+', ' ', m_p.group(1)).strip()
+
+        # Item: <img src="items/<slug>.png" ... alt="<Item Name>" ... />
+        # Slug from the image filename is authoritative (matches the slugs used elsewhere on the site).
+        m_i = re.search(
+            r'<img\s+src="items/([^"\.]+)\.png"[^>]*alt="([^"]+)"',
+            row, re.I,
+        )
+        if not m_i:
+            continue
+        slug = m_i.group(1).strip().lower()
+        item_name = re.sub(r'\s+', ' ', m_i.group(2)).strip()
+
+        key = (pokemon_name, slug)
+        if key in seen:
+            continue
+        seen.add(key)
+        entries.append({"pokemon": pokemon_name, "item": item_name, "slug": slug})
+
+    LITTER_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    with open(LITTER_CACHE, "w", encoding="utf-8") as f:
+        json.dump(entries, f, indent=2, ensure_ascii=False)
+    print(f"Wrote {LITTER_CACHE} ({len(entries)} entries)")
+    return entries
+
+
 def base_name(raw: str) -> str:
     n = re.sub(r"\s*\(.*?\)\s*", "", raw)
     n = re.sub(r"\s*\*.*$", "", n)
@@ -162,7 +241,7 @@ def display_name(raw: str) -> str:
     return re.sub(r"\s*\*.*$", "", raw).strip()
 
 
-def build_data(pokemon, fav, dex_map):
+def build_data(pokemon, fav, litter_entries, dex_map):
     # Clean fav values
     for slug, d in fav.items():
         d["displayName"] = d["displayName"].strip()
@@ -225,6 +304,32 @@ def build_data(pokemon, fav, dex_map):
             if f["slug"]:
                 liked_by[f["slug"]].append({"dex": p["dex"], "name": p["displayName"]})
 
+    # Merge litter data onto each Pokémon and build the inverse `litter` index (item slug → who drops it).
+    # The litter table on Serebii is one row per (Pokémon, item) pair; a Pokémon can in principle
+    # drop more than one item, so we store p["litter"] as a list. Empty list = doesn't litter anything.
+    litter_by_canonical = {}
+    for e in litter_entries:
+        canonical = LITTER_NAME_ALIASES.get(e["pokemon"], e["pokemon"])
+        litter_by_canonical.setdefault(canonical, []).append(e)
+    unmatched_litter_names = set(litter_by_canonical.keys())
+    litter_items = {}  # slug → {slug, name, pokemon: [{dex, name, natDex}]}
+    for p in pokemon:
+        matches = litter_by_canonical.get(p["displayName"], [])
+        p["litter"] = [{"slug": m["slug"], "name": m["item"]} for m in matches]
+        if matches:
+            unmatched_litter_names.discard(p["displayName"])
+        for m in matches:
+            entry = litter_items.setdefault(m["slug"], {
+                "slug": m["slug"], "name": m["item"], "pokemon": [],
+            })
+            entry["pokemon"].append({
+                "dex": p["dex"], "name": p["displayName"], "natDex": p["natDex"],
+            })
+    if unmatched_litter_names:
+        print(f"  warning: {len(unmatched_litter_names)} litter Pokémon not matched to spreadsheet rows: "
+              f"{sorted(unmatched_litter_names)}")
+        print("  → add an entry to LITTER_NAME_ALIASES if the spreadsheet uses a different name.")
+
     pokemon.sort(key=lambda p: (p["dex"] or 0, p.get("displayName", "")))
 
     return {
@@ -238,6 +343,7 @@ def build_data(pokemon, fav, dex_map):
             }
             for slug in fav
         },
+        "litter": litter_items,
     }
 
 
@@ -256,6 +362,8 @@ def embed(data: dict):
     print(f"  Pokémon: {len(data['pokemon'])}")
     print(f"  Favorite categories: {len(data['favorites'])}")
     print(f"  Catalogued items: {sum(len(f['items']) for f in data['favorites'].values())}")
+    print(f"  Litter items: {len(data['litter'])} "
+          f"(dropped by {sum(len(li['pokemon']) for li in data['litter'].values())} Pokémon entries)")
 
 
 def main():
@@ -273,6 +381,18 @@ def main():
         fav = json.loads(SEREBII_CACHE.read_text(encoding="utf-8"))
         print(f"Using cached Serebii data ({len(fav)} categories). Pass --rescrape to refetch.")
 
+    # Litter cache is scraped on --rescrape, or whenever the cache is missing/empty (so blanking
+    # the file is a quick way to force a single-source refresh without touching the favorites cache).
+    if args.rescrape or not LITTER_CACHE.exists():
+        litter_entries = scrape_litter(fav)
+    else:
+        litter_entries = json.loads(LITTER_CACHE.read_text(encoding="utf-8"))
+        if not litter_entries:
+            print("Cached litter data is empty — rescraping.")
+            litter_entries = scrape_litter(fav)
+        else:
+            print(f"Using cached litter data ({len(litter_entries)} entries). Pass --rescrape to refetch.")
+
     dex_map = json.loads(DEX_MAP_PATH.read_text(encoding="utf-8"))
     dex_map.pop("_comment", None)
 
@@ -281,7 +401,7 @@ def main():
     print(f"  {len(pokemon)} Pokémon rows")
 
     print("Building combined data…")
-    data = build_data(pokemon, fav, dex_map)
+    data = build_data(pokemon, fav, litter_entries, dex_map)
 
     print("Embedding into index.html…")
     embed(data)

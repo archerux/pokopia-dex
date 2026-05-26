@@ -33,6 +33,7 @@ If a future feature genuinely needs a framework or build step (e.g. complex stat
 ├── .gitignore
 ├── data/
 │   ├── serebii-favorites.json  Cached Serebii scrape (43 favorite categories)
+│   ├── serebii-litter.json     Cached Serebii scrape (Pokémon ↔ litter-item mappings)
 │   └── dex-map.json            Pokémon name → national dex number (for sprites)
 └── scripts/
     └── build-data.py           Regenerates the embedded data inside index.html
@@ -40,11 +41,12 @@ If a future feature genuinely needs a framework or build step (e.g. complex stat
 
 ## Data pipeline
 
-`index.html` carries one embedded `<script id="pokopia-data" type="application/json">…</script>` block. `scripts/build-data.py` rewrites just that block from three inputs:
+`index.html` carries one embedded `<script id="pokopia-data" type="application/json">…</script>` block. `scripts/build-data.py` rewrites just that block from four inputs:
 
 1. **`Pokopia Pokemon.xlsx`** — `# / Name / Type / Specialty / Location / Ideal Habitat / Favourite 1-5 / Flavor`. ~311 rows including form variants (e.g. Toxtricity x2) and event Pokémon (E1–E4).
 2. **`data/serebii-favorites.json`** — cached scrape of 43 pages under `https://www.serebii.net/pokemonpokopia/favorites/<slug>.shtml`. Each page lists qualifying items for one favorite category.
-3. **`data/dex-map.json`** — hand-maintained map from Pokémon name → national-dex number, needed to build PokéAPI sprite URLs.
+3. **`data/serebii-litter.json`** — cached scrape of `https://www.serebii.net/pokemonpokopia/litter.shtml`. Single page; each row pairs one Pokémon (with the Litter specialty) to one item it drops. Item slugs come from the `<img src="items/<slug>.png">` filename — authoritative because Serebii's item-cell has no anchor. The build script also builds a reverse index `data.litter` so the Items tab can list "who drops Honey" in one lookup. Name mismatches between Serebii and the spreadsheet are normalized via `LITTER_NAME_ALIASES` (e.g. Serebii's "Paldean Wooper" → spreadsheet's "P-Wooper").
+4. **`data/dex-map.json`** — hand-maintained map from Pokémon name → national-dex number, needed to build PokéAPI sprite URLs.
 
 Run:
 
@@ -100,13 +102,13 @@ When iterating: edit `index.html` (or the data sources + re-run `build-data.py`)
 
 ## What's done in v1
 
-Primary lookup flow is complete: list Pokémon → see specialty/habitat/location/flavor/favorites → tap a favorite category → see qualifying items + which other Pokémon like that category. Filters: free-text search, habitat, specialty. Habitats browse grid. Bottom nav with four tabs. Dark theme.
+Primary lookup flow is complete: list Pokémon → see specialty/habitat/location/flavor/favorites/litter → tap a favorite category → see qualifying items + which other Pokémon like that category. Items tab also has a "Litter Drops" section: pick a litter item to see every Pokémon that drops it. Filters: free-text search + a collapsible drawer for habitat/specialty selects (with active-filter count badge on the toggle). Habitats browse grid. Bottom nav with four tabs (active tab uses a soft green pill behind the icon). Pokopia-branded light theme — cream parchment background, grass-green accents, Fredoka/Nunito typography from Google Fonts, official Pokopia logo hotlinked into the home header with a CSS-wordmark fallback. About page credits Serebii, PokéAPI, and the official Pokémon Pokopia site with a fan-project disclaimer.
 
 ## Known gaps & likely next asks
 
 These are deliberate v1 cuts. When Lawrence raises any of them, prefer the smallest change that satisfies the request — don't pre-emptively over-engineer.
 
-- **Dedicated item search.** Right now you reach an item by drilling through a Pokémon → a favorite category. A top-level "Items" search that finds an item by name and shows which categories (and therefore which Pokémon) like it is the obvious follow-up to fully close the loop on Lawrence's secondary problem.
+- **Dedicated item search across favorites items.** Right now you reach a favorite-category item by drilling through a Pokémon → a favorite category. A top-level "Items" search that finds any of the 1,668 catalogued items by name and shows which categories (and therefore which Pokémon) like it is the obvious follow-up. (Note: litter items already have a dedicated browse + drill-in flow on the Items tab — this gap is about the much larger pool of favorite-category items.)
 - **PWA support.** `manifest.json` + a tiny service worker would make the app installable to the home screen and work offline (data is already embedded; only sprites need cache). High value for a phone companion.
 - **Bookmarks / favorites list.** Let the user mark a few Pokémon they're actively training.
 - **Sortable list.** Currently sorts by Pokopia dex; sorting by name / habitat / specialty would be nice.
@@ -121,6 +123,7 @@ These are deliberate v1 cuts. When Lawrence raises any of them, prefer the small
 - **Don't introduce localStorage.** The app needs to work in environments where storage is denied (some `file://` contexts, private browsing). `sessionStorage` with try/catch is the chosen pattern.
 - **Don't use `innerHTML` with user/data-derived content.** Use the `el()` helper.
 - **Any new search/text input must include `'data-focus': '<unique-id>'`.** `render()` does a full DOM swap on every keystroke, so without the focus marker the input would unmount mid-type — on mobile this dismisses the soft keyboard after every letter. The focus-restoration logic in `render()` keys off `data-focus`.
+- **Inline comments for non-obvious decisions, and keep them in sync.** Whenever you make a choice that a future reader couldn't guess from the code alone — *why* a pattern was chosen, *what* edge case it handles, *which* trade-off was accepted — leave a comment near it. When you later change that code, audit the surrounding comments in the same edit and rewrite anything that's now wrong. A stale comment is worse than no comment because it actively misleads. Examples of decisions worth a comment: hotlinking vs bundling an asset, choosing one storage mechanism over another, why a glyph or icon was picked, why a search index is precomputed, why a fallback exists. Examples that don't need a comment: standard library calls, obvious variable names, anything restated by the code immediately below.
 - **Verify changes by running the playwright smoke test** (it's not committed — write it inline in a bash call when needed). The pattern used in v1: navigate to list / detail / favorite-category in a 390×844 viewport, count rendered items, screenshot, eyeball.
 - **Commit messages:** plain English, present tense ("Add item search", not "Added item search"). No conventional-commits prefix required; keep it human.
 

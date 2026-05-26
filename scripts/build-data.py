@@ -122,20 +122,25 @@ def scrape_serebii():
             continue
         display_name = m_h2.group(1).strip()
         section = html[m_h2.end():m_end.start()]
-        # Pull rows: each item row has 3 <td>s — picture cell, name cell, description cell
-        # Extract pairs of (name, description) by matching the second <a>...</a> for the name and the third <td> contents
+        # Pull rows: each row has 3 <td>s — picture cell, name cell, description cell.
+        # The name cell contains <a href="…/items/<itemslug>.shtml">Name</a>. We capture the slug
+        # from the href (authoritative — used to build the Serebii item-image URL at runtime) and
+        # the visible name + description text. Deriving slug from name is wrong about 16% of the
+        # time (Pokémetal → pokemetal not pokmetal; parens are preserved; etc.), so always pull it
+        # from the URL.
         rows = re.findall(
-            r'<tr[^>]*>\s*<td[^>]*>.*?</td>\s*<td[^>]*>\s*<a[^>]*>([^<]+)</a>\s*</td>\s*<td[^>]*>([^<][^<]*?)</td>\s*</tr>',
+            r'<tr[^>]*>\s*<td[^>]*>.*?</td>\s*<td[^>]*>\s*<a[^>]*href="[^"]*/items/([^"\.]+)\.shtml"[^>]*>([^<]+)</a>\s*</td>\s*<td[^>]*>([^<][^<]*?)</td>\s*</tr>',
             section, re.S | re.I,
         )
         items = []
         seen = set()
-        for name, desc in rows:
+        for item_slug, name, desc in rows:
+            item_slug = item_slug.strip()
             name = re.sub(r'\s+', ' ', name).strip()
             desc = re.sub(r'\s+', ' ', desc).strip()
-            if name and name not in seen:
-                seen.add(name)
-                items.append({"name": name, "desc": desc})
+            if item_slug and item_slug not in seen:
+                seen.add(item_slug)
+                items.append({"slug": item_slug, "name": name, "desc": desc})
         print(f"{len(items)} items")
         out[slug] = {"displayName": display_name, "items": items}
         time.sleep(0.4)  # be polite

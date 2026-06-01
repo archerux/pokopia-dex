@@ -1054,6 +1054,11 @@ function render() {
   else if (r.view === 'about') view = viewAbout();
   else view = viewPokemonList();
 
+  // Prevent body scroll on pages whose content fits the viewport — stops Chrome mobile from
+  // hiding/showing the toolbar and creating the scroll-offset artefact on navigation.
+  const noScroll = r.view === 'habitats' || r.view === 'about';
+  document.body.style.overflow = noScroll ? 'hidden' : '';
+
   // Preserve focus + caret across the rebuild. Without this, typing into a search input would
   // dismiss the on-screen keyboard on mobile after every keystroke: oninput → render() →
   // replaceChildren() unmounts the focused <input>, so the new <input> in the next tree has no

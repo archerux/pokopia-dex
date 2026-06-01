@@ -65,14 +65,21 @@
   .type-Flying{background:#a98ff3;color:#fff}.type-Psychic{background:#f95587;color:#fff}.type-Bug{background:#a6b91a;color:#fff}
   .type-Rock{background:#b6a136;color:#fff}.type-Ghost{background:#735797;color:#fff}.type-Dragon{background:#6f35fc;color:#fff}
   .type-Dark{background:#705746;color:#fff}.type-Steel{background:#b7b7ce;color:#1a1a1a}.type-Fairy{background:#d685ad;color:#1a1a1a}
-  /* Habitat tints — re-balanced for the new light theme (warmer, slightly more saturated) */
-  .hab-Bright{background:linear-gradient(135deg,#fef3c7,#fbbf24aa);border:1px solid #f59e0b;color:#7a4a00}
-  .hab-Dark  {background:linear-gradient(135deg,#ddd6fe,#8b5cf6aa);border:1px solid #6d28d9;color:#3a1b6e}
-  .hab-Cool  {background:linear-gradient(135deg,#cffafe,#22d3eeaa);border:1px solid #06b6d4;color:#0e4a52}
-  .hab-Warm  {background:linear-gradient(135deg,#ffedd5,#fb923caa);border:1px solid #ea580c;color:#7a2f00}
-  .hab-Humid {background:linear-gradient(135deg,#d1fae5,#10b981aa);border:1px solid #047857;color:#0f4d35}
-  .hab-Dry   {background:linear-gradient(135deg,#fef3c7,#d6a55aaa);border:1px solid #a16207;color:#6b3700}
-  .hab-Default{background:#cde9b2;border:1px solid var(--border);color:var(--ink-2)}
+  /* Habitat tints — 2px borders on pills, light enough to sit alongside type chips in list rows */
+  .hab-Bright{background:linear-gradient(135deg,#fef3c7,#fbbf24aa);border:2px solid #f59e0b;color:#7a4a00}
+  .hab-Dark  {background:linear-gradient(135deg,#ddd6fe,#8b5cf6aa);border:2px solid #6d28d9;color:#3a1b6e}
+  .hab-Cool  {background:linear-gradient(135deg,#cffafe,#22d3eeaa);border:2px solid #06b6d4;color:#0e4a52}
+  .hab-Warm  {background:linear-gradient(135deg,#ffedd5,#fb923caa);border:2px solid #ea580c;color:#7a2f00}
+  .hab-Humid {background:linear-gradient(135deg,#d1fae5,#10b981aa);border:2px solid #047857;color:#0f4d35}
+  .hab-Dry   {background:linear-gradient(135deg,#fef3c7,#d6a55aaa);border:2px solid #a16207;color:#6b3700}
+  .hab-Default{background:#cde9b2;border:2px solid var(--border);color:var(--ink-2)}
+  /* hab-card: thick-border + offset shadow treatment only for the large habitat cards */
+  .hab-Bright.hab-card{border-width:3px;box-shadow:0 4px 0 #b45309,0 6px 20px rgba(0,0,0,0.08)}
+  .hab-Dark.hab-card  {border-width:3px;box-shadow:0 4px 0 #5b21b6,0 6px 20px rgba(0,0,0,0.08)}
+  .hab-Cool.hab-card  {border-width:3px;box-shadow:0 4px 0 #0891b2,0 6px 20px rgba(0,0,0,0.08)}
+  .hab-Warm.hab-card  {border-width:3px;box-shadow:0 4px 0 #9a3412,0 6px 20px rgba(0,0,0,0.08)}
+  .hab-Humid.hab-card {border-width:3px;box-shadow:0 4px 0 #065f46,0 6px 20px rgba(0,0,0,0.08)}
+  .hab-Dry.hab-card   {border-width:3px;box-shadow:0 4px 0 #78350f,0 6px 20px rgba(0,0,0,0.08)}
 
   /* Bottom nav safe area */
   .bottom-nav { padding-bottom: max(env(safe-area-inset-bottom), 0.5rem); }
@@ -81,8 +88,8 @@
   .anim-slide { animation: slideUp .18s ease-out; }
   /* Hide native select chevron + replace with a green one matching the theme */
   select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%237AB951' d='M6 8L0 0h12z'/></svg>"); background-repeat: no-repeat; background-position: right 0.6rem center; padding-right: 1.75rem; }
-  /* Friendlier card shadow for surfaces sitting on the cream background */
-  .pop-card { box-shadow: 0 1px 0 rgba(43,58,29,0.04), 0 4px 12px rgba(43,58,29,0.06); }
+  /* Card shadow with downward offset — echoes the 3D sticker feel of Pokopia UI */
+  .pop-card { box-shadow: 0 3px 0 rgba(43,58,29,0.10), 0 6px 20px rgba(43,58,29,0.08); }
 </style>
 </head>
 <body class="min-h-screen">
@@ -196,8 +203,24 @@ function el(tag, attrs={}, ...children) {
   }
   return e;
 }
+// Type icon sprites from PokéAPI — official game-style badges, much smaller footprint than text chips.
+const TYPE_IDS = {
+  Normal:1,Fighting:2,Flying:3,Poison:4,Ground:5,Rock:6,Bug:7,Ghost:8,Steel:9,
+  Fire:10,Water:11,Grass:12,Electric:13,Psychic:14,Ice:15,Dragon:16,Dark:17,Fairy:18
+};
 function typeChip(t) {
-  return el('span', { class: `type-${t} text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded text-[#2b3a1d]` }, t);
+  const id = TYPE_IDS[t];
+  if (!id) return el('span', { class: `type-${t} text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded` }, t);
+  // Clip to just the circular symbol: the badge is ~3:1 (round icon on the left, text on the right).
+  // object-fit:cover on a slightly-wide square crops out the text; the icon is circular so a fully
+  // round container matches the icon's own edge cleanly on all sides. object-position nudged a hair
+  // right of left so the icon sits centered in the crop and isn't clipped.
+  return el('img', {
+    src: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-ix/scarlet-violet/${id}.png`,
+    alt: t, title: t, loading: 'lazy',
+    style: 'height:20px;width:20px;object-fit:cover;object-position:-5px center;border-radius:50%;flex-shrink:0',
+    onerror: function(){ this.replaceWith(el('span', { class: `type-${t} text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded` }, t)); }
+  });
 }
 function habitatPill(h) {
   if (!h) return null;
@@ -359,7 +382,7 @@ function viewPokemonList() {
         el('div', { class: 'mt-1 flex flex-wrap items-center gap-1.5' },
           ...p.types.map(typeChip),
           habitatPill(p.habitat),
-          ...p.specialties.map(s => el('span', { class: 'text-[10px] text-white bg-[#5e9c39] px-1.5 py-0.5 rounded font-semibold' }, s))
+          ...p.specialties.map(s => el('span', { class: 'text-xs text-white bg-[#5e9c39] px-2 py-0.5 rounded font-semibold' }, s))
         )
       ),
       el('span', { class: 'text-[#c4cfa5]', html: '&rsaquo;' })
@@ -852,15 +875,31 @@ function viewLitterDetail(slug) {
 function viewHabitats() {
   return el('div', { class: 'flex flex-col min-h-screen' },
     renderHeader('Browse by Habitat'),
-    el('div', { class: 'flex-1 scroll-area p-3 grid grid-cols-2 gap-3' },
+    el('div', { class: 'flex-1 scroll-area p-3 grid grid-cols-2 gap-3 items-start content-start' },
       ...HABITATS.map(h => {
         const count = POKEMON.filter(p => p.habitat === h).length;
+        // Pick first 4 numbered Pokémon (natDex non-null) for the sprite preview strip.
+        const sprites = POKEMON.filter(p => p.habitat === h && p.natDex).slice(0, 4);
         return el('button', {
-          class: `hab-${h} rounded-2xl border p-4 text-left active:scale-[0.98] transition`,
+          class: `hab-${h} hab-card rounded-2xl border text-left active:scale-[0.98] transition flex flex-col overflow-hidden`,
           onclick: () => { state.habitatFilter = h; saveState(); go('pokemon'); }
         },
-          el('div', { class: 'text-[#2b3a1d] font-semibold text-lg' }, h),
-          el('div', { class: 'text-xs text-[#3d4d26]/80 mt-1' }, `${count} Pokémon`)
+          // Name + count at top
+          el('div', { class: 'p-3 pb-1' },
+            el('div', {
+              class: 'text-2xl text-[#2b3a1d] uppercase leading-none',
+              style: 'font-family:"Luckiest Guy","Fredoka",sans-serif'
+            }, h),
+            el('div', { class: 'text-xs text-[#3d4d26]/70 mt-1.5 font-semibold' }, `${count} Pokémon`)
+          ),
+          // Sprite strip at bottom-right
+          el('div', { class: 'flex items-end justify-end px-1 pb-1 pt-2' },
+            ...sprites.map(p => el('img', {
+              src: SPRITE_PIXEL(p.natDex), alt: p.displayName, loading: 'lazy',
+              class: 'pixel-sprite w-11 h-11',
+              onerror: function(){ this.style.display='none'; }
+            }))
+          )
         );
       })
     ),

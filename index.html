@@ -1067,18 +1067,16 @@ function render() {
 
   const app = document.getElementById('app');
   const isRouteChange = !render._lastHash || render._lastHash !== location.hash;
-  // Reset scroll on route change. We do it both synchronously (before DOM swap, covers most cases)
-  // and via RAF (after paint, covers Chrome mobile toolbar reappear which causes a ~56px offset).
+  // Reset scroll on route change. Synchronous reset covers most cases; the visualViewport listener
+  // below handles the async Chrome-toolbar-reappear case within a 600ms guard window.
   if (isRouteChange) {
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
     render._lastHash = location.hash;
-    requestAnimationFrame(() => {
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    });
+    _navScrollGuard = true;
+    clearTimeout(render._navGuardTimer);
+    render._navGuardTimer = setTimeout(() => { _navScrollGuard = false; }, 600);
   }
   app.replaceChildren(view);
   // Trigger page entry animation only on route changes, not on search/filter state updates.
@@ -1121,6 +1119,21 @@ function render() {
 
 // Disable browser scroll restoration so navigating between hash routes always starts at the top.
 if (history.scrollRestoration) history.scrollRestoration = 'manual';
+
+// Chrome mobile hides/shows its toolbar based on scroll, which causes an async layout shift when
+// navigating. visualViewport fires 'resize' when the toolbar finishes animating — we reset scroll
+// there if it happens within 600ms of a navigation (the typical toolbar animation window).
+let _navScrollGuard = false;
+const _scrollToTop = () => {
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+};
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    if (_navScrollGuard) _scrollToTop();
+  });
+}
 
 // Initial render
 render();

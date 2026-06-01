@@ -1067,13 +1067,18 @@ function render() {
 
   const app = document.getElementById('app');
   const isRouteChange = !render._lastHash || render._lastHash !== location.hash;
-  // Reset scroll BEFORE the DOM swap — more reliable on iOS Safari than after.
-  // Setting all three targets covers every browser's quirk (html, body, window).
+  // Reset scroll on route change. We do it both synchronously (before DOM swap, covers most cases)
+  // and via RAF (after paint, covers Chrome mobile toolbar reappear which causes a ~56px offset).
   if (isRouteChange) {
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
     render._lastHash = location.hash;
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    });
   }
   app.replaceChildren(view);
   // Trigger page entry animation only on route changes, not on search/filter state updates.

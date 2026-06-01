@@ -31,6 +31,8 @@ If a future feature genuinely needs a framework or build step (e.g. complex stat
 ├── LICENSE                     MIT + attribution notes
 ├── CLAUDE.md                   ← this file
 ├── .gitignore
+├── assets/
+│   └── hero-img.jpg            Home-screen hero banner (saved from pokopia.pokemon.com — self-hosted so the banner isn't dependent on their CDN)
 ├── data/
 │   ├── serebii-favorites.json  Cached Serebii scrape (43 favorite categories)
 │   ├── serebii-litter.json     Cached Serebii scrape (Pokémon ↔ litter-item mappings)

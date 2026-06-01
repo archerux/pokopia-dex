@@ -344,25 +344,38 @@ function renderHeader(title, subtitle, opts={}) {
 
 function renderBottomNav(active) {
   // Active tab gets a soft green pill behind the icon to echo the Pokopia "happy/highlighted" feel.
-  const tab = (key, label, icon) => el('button', {
-    class: `flex-1 py-2 flex flex-col items-center gap-0.5 ${active === key ? 'text-[#5e9c39]' : 'text-[#7a8a60]'} active:opacity-70 transition-colors duration-150`,
-    onclick: () => go(key)
-  },
-    el('span', {
-      class: 'text-lg leading-none w-10 h-7 rounded-full flex items-center justify-center ' +
-             (active === key ? 'bg-[#7AB951]/15' : ''),
-      html: icon
-    }),
-    el('span', { class: 'text-[10px] font-semibold' }, label)
-  );
+  // Nav icons: Ditto sprite for Pokémon, Pokopia item images for the rest.
+  const NAV_IMGS = {
+    pokemon:   { src: 'https://www.serebii.net/pokemonpokopia/pokemon/132.png', alt: 'Ditto', cls: '', sz: 30 },
+    habitats:  { src: 'https://www.serebii.net/pokemonpokopia/items/tallgrass.png',    alt: 'Tall grass',     cls: '', sz: 28 },
+    favorites: { src: 'https://www.serebii.net/pokemonpokopia/items/adventurekit.png', alt: 'Adventure kit',  cls: '', sz: 28 },
+    about:     { src: 'https://www.serebii.net/pokemonpokopia/items/signpost.png',     alt: 'Signpost',       cls: '', sz: 28 },
+  };
+  const tab = (key, label) => {
+    const { src, alt, cls, sz } = NAV_IMGS[key];
+    const isActive = active === key;
+    return el('button', {
+      class: `flex-1 py-2 flex flex-col items-center gap-0.5 active:opacity-70 transition-opacity duration-150`,
+      onclick: () => go(key)
+    },
+      el('div', {
+        class: 'w-10 h-8 rounded-full flex items-center justify-center ' + (isActive ? 'bg-[#7AB951]/15' : '')
+      },
+        el('img', {
+          src, alt, loading: 'eager', referrerpolicy: 'no-referrer',
+          class: cls,
+          style: `width:${sz}px;height:${sz}px;object-fit:contain;transition:opacity 150ms;${isActive ? '' : 'opacity:0.45;filter:saturate(0.4)'}`,
+          onerror: function(){ this.style.display='none'; }
+        })
+      ),
+      el('span', { class: `text-[10px] font-semibold ${isActive ? 'text-[#5e9c39]' : 'text-[#7a8a60]'}` }, label)
+    );
+  };
   return el('nav', { class: 'bottom-nav sticky bottom-0 z-20 bg-[#e4f5d0]/95 backdrop-blur border-t border-[#c0d99a] flex' },
-    // Icons chosen to fit the Pokopia "cozy garden" vibe. ALL must be BMP glyphs so they render
-    // on platforms without an emoji font (e.g. headless Chromium in CI). Tested: 🌿 (U+1F33F)
-    // failed as tofu in Linux Chromium → switched to ☘ shamrock (U+2618).
-    tab('pokemon',   'Pokémon',   '&#9752;'),    // ☘ shamrock
-    tab('habitats',  'Habitats',  '&#9728;'),
-    tab('favorites', 'Items',     '&#10084;'),
-    tab('about',     'About',     '&#8505;')
+    tab('pokemon',   'Pokémon'),
+    tab('habitats',  'Habitats'),
+    tab('favorites', 'Items'),
+    tab('about',     'About')
   );
 }
 
@@ -559,7 +572,7 @@ function viewPokemonDetail(id) {
     flavorRow = infoRow('Favorite flavor', p.flavor);
   } else {
     flavorRow = el('button', {
-      class: 'flex justify-between items-center gap-3 py-2 w-full text-left',
+      class: `flex justify-between items-center gap-3 py-2 w-full text-left${litterRows.length ? ' border-b border-[#c0d99a]' : ''}`,
       'aria-expanded': isFlavorOpen ? 'true' : 'false',
       onclick: () => {
         state.flavorOpenFor = isFlavorOpen ? '' : flavorRowKey;
@@ -577,7 +590,7 @@ function viewPokemonDetail(id) {
   const flavorDrawer = flavorData ? el('div', { class: 'drawer-wrap' + (isFlavorOpen ? ' open' : '') },
     el('div', { class: 'drawer-inner' },
       el('div', { class: 'pb-2' },
-        el('div', { class: '-mx-4 border-t border-[#c0d99a] divide-y divide-[#c0d99a]' },
+        el('div', { class: '-mx-4 divide-y divide-[#c0d99a]' },
           ...flavorData.items.map(it => el('div', { class: 'px-4 py-2 flex items-start gap-3' },
             itemThumb(it.slug),
             el('div', { class: 'flex-1 min-w-0' },
@@ -899,7 +912,7 @@ function viewLitterDetail(slug) {
   const li = LITTER[slug];
   if (!li) return viewNotFound('Litter item not found.');
 
-  const header = renderHeader(li.name, `Litter drop · ${li.pokemon.length} Pokémon`, { back: true });
+  const header = renderHeader(li.name, null, { back: true });
 
   const hero = el('section', { class: 'mx-3 mt-3 rounded-2xl bg-white pop-card border border-[#c0d99a] p-4 flex items-center gap-4 anim-slide' },
     el('div', { class: 'shrink-0 w-20 h-20 rounded-xl bg-[#cde9b2]/80 flex items-center justify-center overflow-hidden' },
@@ -911,9 +924,7 @@ function viewLitterDetail(slug) {
     ),
     el('div', { class: 'flex-1 min-w-0' },
       el('div', { class: 'text-xs uppercase tracking-wide text-[#9aac7e]' }, 'Litter item'),
-      el('div', { class: 'text-xl text-[#2b3a1d] uppercase tracking-wide', style: 'font-family:"Luckiest Guy","Fredoka",sans-serif' }, li.name),
-      el('div', { class: 'text-xs text-[#7a8a60] mt-1' },
-        `Dropped by ${li.pokemon.length} Pokémon with the Litter specialty.`)
+      el('div', { class: 'text-xl text-[#2b3a1d] uppercase tracking-wide', style: 'font-family:"Luckiest Guy","Fredoka",sans-serif' }, li.name)
     )
   );
 

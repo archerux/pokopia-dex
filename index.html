@@ -13,6 +13,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#7AB951">
 <title>Pokopia Dex</title>
+<!-- Favicon + webclip -->
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/webclip.png">
 <!-- Tailwind via CDN: we accept the prod warning to keep zero-build deploy. -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- Pokopia branding fonts: Luckiest Guy (bubbly display, matches official site) + Nunito (friendly body). Fredoka kept as font-stack fallback only. -->
@@ -269,10 +272,10 @@ function pokemonGridCard(p) {
   },
     el('img', {
       src: SPRITE_PIXEL(p.natDex), alt: p.displayName, loading: 'lazy',
-      class: 'pixel-sprite w-12 h-12',
+      class: 'pixel-sprite w-16 h-16',
       onerror: function(){ this.style.display='none'; }
     }),
-    el('span', { class: 'text-[11px] text-[#2b3a1d] text-center leading-tight' }, p.displayName)
+    el('span', { class: 'text-xs font-semibold text-[#2b3a1d] text-center leading-tight uppercase tracking-wide' }, p.displayName)
   );
 }
 
@@ -948,7 +951,7 @@ function viewHabitats() {
         const sprites = POKEMON.filter(p => p.habitat === h && p.natDex).slice(0, 4);
         return el('button', {
           class: `hab-${h} hab-card rounded-2xl border text-left press-card flex flex-col overflow-hidden`,
-          onclick: () => { state.habitatFilter = h; saveState(); go('pokemon'); },
+          onclick: () => { state.habitatFilter = h; state.filtersOpen = true; saveState(); go('pokemon'); },
           ontouchstart: function(){}
         },
           // Name + count at top

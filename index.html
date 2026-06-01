@@ -1067,6 +1067,14 @@ function render() {
 
   const app = document.getElementById('app');
   const isRouteChange = !render._lastHash || render._lastHash !== location.hash;
+  // Reset scroll BEFORE the DOM swap — more reliable on iOS Safari than after.
+  // Setting all three targets covers every browser's quirk (html, body, window).
+  if (isRouteChange) {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    render._lastHash = location.hash;
+  }
   app.replaceChildren(view);
   // Trigger page entry animation only on route changes, not on search/filter state updates.
   if (isRouteChange) view.classList.add('anim-page');
@@ -1104,13 +1112,6 @@ function render() {
     render._prevFlavorOpen = false;
   }
 
-  // Scroll to top on route change (but not on every render — would jank typing into a sticky search).
-  // Deferred via requestAnimationFrame so it fires after the browser's own scroll restoration,
-  // which can override a synchronous scrollTo during hash navigation.
-  if (!render._lastHash || render._lastHash !== location.hash) {
-    render._lastHash = location.hash;
-    requestAnimationFrame(() => { document.scrollingElement.scrollTop = 0; });
-  }
 }
 
 // Disable browser scroll restoration so navigating between hash routes always starts at the top.

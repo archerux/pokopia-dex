@@ -1104,12 +1104,17 @@ function render() {
     render._prevFlavorOpen = false;
   }
 
-  // Scroll to top on route change (but not on every render — would jank typing into a sticky search)
+  // Scroll to top on route change (but not on every render — would jank typing into a sticky search).
+  // Deferred via requestAnimationFrame so it fires after the browser's own scroll restoration,
+  // which can override a synchronous scrollTo during hash navigation.
   if (!render._lastHash || render._lastHash !== location.hash) {
-    window.scrollTo(0, 0);
     render._lastHash = location.hash;
+    requestAnimationFrame(() => { document.scrollingElement.scrollTop = 0; });
   }
 }
+
+// Disable browser scroll restoration so navigating between hash routes always starts at the top.
+if (history.scrollRestoration) history.scrollRestoration = 'manual';
 
 // Initial render
 render();

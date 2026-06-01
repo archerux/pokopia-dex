@@ -352,9 +352,9 @@ function viewPokemonList() {
         })
       ),
       el('div', { class: 'flex-1 min-w-0' },
-        el('div', { class: 'flex items-baseline gap-2' },
+        el('div', { style: 'display:grid;grid-template-columns:2rem 1fr;align-items:baseline' },
           el('span', { class: 'text-[10px] text-[#9aac7e] font-mono tabular-nums' }, '#' + (p.dex ?? '—')),
-          el('span', { class: 'text-base font-medium text-[#2b3a1d] truncate' }, p.displayName)
+          el('span', { class: 'text-base font-extrabold text-[#2b3a1d] truncate uppercase tracking-wide' }, p.displayName)
         ),
         el('div', { class: 'mt-1 flex flex-wrap items-center gap-1.5' },
           ...p.types.map(typeChip),

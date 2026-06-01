@@ -65,29 +65,42 @@
   .type-Flying{background:#a98ff3;color:#fff}.type-Psychic{background:#f95587;color:#fff}.type-Bug{background:#a6b91a;color:#fff}
   .type-Rock{background:#b6a136;color:#fff}.type-Ghost{background:#735797;color:#fff}.type-Dragon{background:#6f35fc;color:#fff}
   .type-Dark{background:#705746;color:#fff}.type-Steel{background:#b7b7ce;color:#1a1a1a}.type-Fairy{background:#d685ad;color:#1a1a1a}
-  /* Habitat tints — 2px borders on pills, light enough to sit alongside type chips in list rows */
-  .hab-Bright{background:linear-gradient(135deg,#fef3c7,#fbbf24aa);border:2px solid #f59e0b;color:#7a4a00}
-  .hab-Dark  {background:linear-gradient(135deg,#ddd6fe,#8b5cf6aa);border:2px solid #6d28d9;color:#3a1b6e}
-  .hab-Cool  {background:linear-gradient(135deg,#cffafe,#22d3eeaa);border:2px solid #06b6d4;color:#0e4a52}
-  .hab-Warm  {background:linear-gradient(135deg,#ffedd5,#fb923caa);border:2px solid #ea580c;color:#7a2f00}
-  .hab-Humid {background:linear-gradient(135deg,#d1fae5,#10b981aa);border:2px solid #047857;color:#0f4d35}
-  .hab-Dry   {background:linear-gradient(135deg,#fef3c7,#d6a55aaa);border:2px solid #a16207;color:#6b3700}
-  .hab-Default{background:#cde9b2;border:2px solid var(--border);color:var(--ink-2)}
-  /* hab-card: thick-border + offset shadow treatment only for the large habitat cards */
-  .hab-Bright.hab-card{border-width:3px;box-shadow:0 4px 0 #b45309,0 6px 20px rgba(0,0,0,0.08)}
-  .hab-Dark.hab-card  {border-width:3px;box-shadow:0 4px 0 #5b21b6,0 6px 20px rgba(0,0,0,0.08)}
-  .hab-Cool.hab-card  {border-width:3px;box-shadow:0 4px 0 #0891b2,0 6px 20px rgba(0,0,0,0.08)}
-  .hab-Warm.hab-card  {border-width:3px;box-shadow:0 4px 0 #9a3412,0 6px 20px rgba(0,0,0,0.08)}
-  .hab-Humid.hab-card {border-width:3px;box-shadow:0 4px 0 #065f46,0 6px 20px rgba(0,0,0,0.08)}
-  .hab-Dry.hab-card   {border-width:3px;box-shadow:0 4px 0 #78350f,0 6px 20px rgba(0,0,0,0.08)}
+  /* Habitat tints — very light tinted backgrounds so the thick border carries the color identity,
+     matching the Pokopia site's button style (white bg + colored stroke + soft drop shadow). */
+  .hab-Bright{background:linear-gradient(135deg,#fffef0,#fffbe6);border:2px solid #f59e0b;color:#7a4a00}
+  .hab-Dark  {background:linear-gradient(135deg,#fdfcff,#f3eeff);border:2px solid #7c3aed;color:#3a1b6e}
+  .hab-Cool  {background:linear-gradient(135deg,#f8fbff,#e8f4ff);border:2px solid #60a5fa;color:#1e4a7a}
+  .hab-Warm  {background:linear-gradient(135deg,#fffaf5,#fff0e0);border:2px solid #f97316;color:#7a2f00}
+  .hab-Humid {background:linear-gradient(135deg,#f6fff8,#e6ffe8);border:2px solid #84cc16;color:#2d5a0e}
+  .hab-Dry   {background:linear-gradient(135deg,#fffdf0,#fff8e0);border:2px solid #b45309;color:#6b3700}
+  .hab-Default{background:#f8fdf2;border:2px solid var(--border);color:var(--ink-2)}
+  /* hab-card: thicker border + soft drop shadow matching Pokopia button aesthetic */
+  .hab-Bright.hab-card{border-width:4px;box-shadow:0 8px 24px rgba(245,158,11,0.25),0 2px 8px rgba(0,0,0,0.08)}
+  .hab-Dark.hab-card  {border-width:4px;box-shadow:0 8px 24px rgba(124,58,237,0.25),0 2px 8px rgba(0,0,0,0.08)}
+  .hab-Cool.hab-card  {border-width:4px;box-shadow:0 8px 24px rgba(96,165,250,0.25),0 2px 8px rgba(0,0,0,0.08)}
+  .hab-Warm.hab-card  {border-width:4px;box-shadow:0 8px 24px rgba(249,115,22,0.25),0 2px 8px rgba(0,0,0,0.08)}
+  .hab-Humid.hab-card {border-width:4px;box-shadow:0 8px 24px rgba(132,204,22,0.25),0 2px 8px rgba(0,0,0,0.08)}
+  .hab-Dry.hab-card   {border-width:4px;box-shadow:0 8px 24px rgba(180,83,9,0.25),0 2px 8px rgba(0,0,0,0.08)}
 
   /* Bottom nav safe area */
   .bottom-nav { padding-bottom: max(env(safe-area-inset-bottom), 0.5rem); }
-  /* Slide up animation */
+  /* Slide up animation for individual sections */
   @keyframes slideUp { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   .anim-slide { animation: slideUp .18s ease-out; }
+  /* Full-page entry animation on route changes */
+  @keyframes pageIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .anim-page { animation: pageIn .18s ease-out forwards; }
+  /* Remove iOS tap highlight and 300ms delay across all interactive elements */
+  button, a, select { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  /* Smooth press scale for card-like buttons */
+  .press-card { transition: transform 120ms ease, box-shadow 120ms ease; }
+  .press-card:active { transform: scale(0.97); }
+  /* Smooth height animation for drawers — grid-template-rows trick animates 0→auto cleanly */
+  .drawer-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.22s ease; }
+  .drawer-wrap.open { grid-template-rows: 1fr; }
+  .drawer-inner { overflow: hidden; min-height: 0; }
   /* Hide native select chevron + replace with a green one matching the theme */
-  select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='15' height='10' viewBox='0 0 12 8'><path fill='%237AB951' d='M6 8L0 0h12z'/></svg>"); background-repeat: no-repeat; background-position: right 0.6rem center; padding-right: 1.9rem; }
+  select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%237AB951' d='M6 8L0 0h12z'/></svg>"); background-repeat: no-repeat; background-position: right 0.6rem center; padding-right: 1.75rem; }
   /* Card shadow with downward offset — echoes the 3D sticker feel of Pokopia UI */
   .pop-card { box-shadow: 0 3px 0 rgba(43,58,29,0.10), 0 6px 20px rgba(43,58,29,0.08); }
 </style>
@@ -251,7 +264,7 @@ function itemThumb(slug) {
 // pokemonGridCard — sprite + name tile for the 3-column "Pokémon that like/drop this" grids.
 function pokemonGridCard(p) {
   return el('button', {
-    class: 'flex flex-col items-center gap-1 p-2 rounded-lg active:bg-[#cde9b2]',
+    class: 'flex flex-col items-center gap-1 p-2 rounded-lg active:bg-[#cde9b2] transition-colors duration-100',
     onclick: () => go(`pokemon/${encodeURIComponent(pokeKey(p))}`)
   },
     el('img', {
@@ -329,7 +342,7 @@ function renderHeader(title, subtitle, opts={}) {
 function renderBottomNav(active) {
   // Active tab gets a soft green pill behind the icon to echo the Pokopia "happy/highlighted" feel.
   const tab = (key, label, icon) => el('button', {
-    class: `flex-1 py-2 flex flex-col items-center gap-0.5 ${active === key ? 'text-[#5e9c39]' : 'text-[#7a8a60]'} active:opacity-80`,
+    class: `flex-1 py-2 flex flex-col items-center gap-0.5 ${active === key ? 'text-[#5e9c39]' : 'text-[#7a8a60]'} active:opacity-70 transition-colors duration-150`,
     onclick: () => go(key)
   },
     el('span', {
@@ -364,7 +377,7 @@ function viewPokemonList() {
 
   const list_node = el('div', { class: 'divide-y divide-[#c0d99a]' },
     ...list.map((p, i) => el('button', {
-      class: 'w-full flex items-center gap-3 px-4 py-2.5 text-left active:bg-[#cde9b2]',
+      class: 'w-full flex items-center gap-3 px-4 py-2.5 text-left active:bg-[#cde9b2] transition-colors duration-100',
       onclick: () => go(`pokemon/${encodeURIComponent(pokeKey(p))}`)
     },
       el('div', { class: 'shrink-0 w-14 h-14 rounded-lg bg-[#cde9b2]/80 flex items-center justify-center overflow-hidden' },
@@ -415,15 +428,17 @@ function viewPokemonList() {
             oninput: e => { state.search = e.target.value; saveState(); render(); }
           }),
           el('button', {
-            class: 'shrink-0 flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg ' +
-                   (activeCount || state.filtersOpen ? 'bg-[#7AB951] text-[#2b3a1d]' : 'bg-white border border-[#c0d99a] text-[#2b3a1d]') +
+            class: 'shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg border transition-all duration-150 ' +
+                   (activeCount || state.filtersOpen ? 'bg-[#7AB951] border-[#5e9c39] text-[#2b3a1d]' : 'bg-white border-[#c0d99a] text-[#2b3a1d]') +
                    ' active:opacity-80',
             'aria-expanded': state.filtersOpen ? 'true' : 'false',
             onclick: () => { state.filtersOpen = !state.filtersOpen; saveState(); render(); }
           },
             el('span', {}, 'Filters'),
             activeCount ? el('span', { class: 'text-[10px] font-semibold bg-white/40 rounded-full px-1.5 py-0.5 leading-none' }, String(activeCount)) : null,
-            el('span', { class: 'text-xs', html: state.filtersOpen ? '&#9652;' : '&#9662;' })
+            el('span', {
+              html: `<svg width="12" height="8" viewBox="0 0 12 8" style="display:block"><path fill="${activeCount || state.filtersOpen ? '#3d4d26' : '#7AB951'}" d="${state.filtersOpen ? 'M6 0L12 8H0Z' : 'M6 8L0 0h12z'}"/></svg>`
+            })
           )
         ),
         state.filtersOpen ? el('div', { class: 'px-3 pb-3 space-y-2 anim-slide' },
@@ -460,24 +475,46 @@ function viewPokemonDetail(id) {
   const p = POKEMON.find(x => pokeKey(x) === id);
   if (!p) return viewNotFound('Pokémon not found.');
 
-  const header = renderHeader(p.displayName, p.types.join(' / ') + (p.habitat ? ' · ' + p.habitat : ''), { back: true });
+  const header = renderHeader(p.displayName, null, { back: true });
 
-  const heroBg = `hab-${p.habitat || 'Default'}`;
-  const hero = el('div', { class: `${heroBg} border-b mx-3 mt-3 rounded-2xl p-4 flex items-center gap-4 anim-slide` },
-    el('div', { class: 'shrink-0 w-28 h-28 rounded-xl bg-[#7AB951]/15 flex items-center justify-center overflow-hidden' },
-      el('img', {
-        src: SPRITE_ART(p.natDex), alt: p.displayName, loading: 'lazy',
-        class: 'w-28 h-28 object-contain',
-        onerror: function(){ this.src = SPRITE_PIXEL(p.natDex); this.className='pixel-sprite w-20 h-20 object-contain'; }
-      })
-    ),
-    el('div', { class: 'flex-1 min-w-0' },
-      el('div', { class: 'text-xs text-[#3d4d26]/80 font-mono' }, 'Pokopia #' + (p.dex ?? '—')),
-      el('div', { class: 'text-xl text-[#2b3a1d] uppercase tracking-wide', style: 'font-family:"Luckiest Guy","Fredoka",sans-serif' }, p.displayName),
-      el('div', { class: 'mt-2 flex flex-wrap gap-1.5' }, ...p.types.map(typeChip)),
-      el('div', { class: 'mt-2 flex flex-wrap gap-1.5' },
-        habitatPill(p.habitat),
-        p.flavor ? el('span', { class: 'text-xs text-[#2b3a1d] bg-white/70 px-2 py-0.5 rounded-full font-semibold' }, '🍴 ' + p.flavor) : null
+  // Polaroid-style hero card inspired by the Pokopia gallery.
+  // Slight deterministic tilt (based on dex) so each Pokémon feels unique.
+  // Separate photo-area gradients (more saturated than the pills) give the image real colour.
+  const HAB_PHOTO = {
+    Bright:'linear-gradient(160deg,#fef9c3,#fde68a)', Dark:'linear-gradient(160deg,#ede9fe,#c4b5f4)',
+    Cool:  'linear-gradient(160deg,#dbeafe,#93c5fd)', Warm:'linear-gradient(160deg,#ffedd5,#fdba74)',
+    Humid: 'linear-gradient(160deg,#dcfce7,#86efac)', Dry: 'linear-gradient(160deg,#fefce8,#fcd34d88)',
+    Default:'linear-gradient(160deg,#e4f5d0,#cde9b2)',
+  };
+  const tiltDeg = (p.natDex ? (p.natDex % 2 === 0 ? -1.8 : 1.8) : -1.8);
+  const hero = el('div', {
+    class: 'mx-5 mt-4 mb-8 anim-slide',
+    style: `transform:rotate(${tiltDeg}deg)`
+  },
+    el('div', {
+      class: 'bg-white rounded overflow-hidden',
+      style: 'box-shadow:4px 10px 32px rgba(0,0,0,0.18),0 2px 6px rgba(0,0,0,0.08)'
+    },
+      // White trim on top + sides (polaroid frame), then the photo inset within
+      el('div', { class: 'pt-3 px-3' },
+        el('div', {
+          class: 'rounded-sm overflow-hidden',
+          style: `background:${HAB_PHOTO[p.habitat] || HAB_PHOTO.Default};padding:2rem 1rem;display:flex;justify-content:center;align-items:center`
+        },
+          el('img', {
+            src: SPRITE_ART(p.natDex), alt: p.displayName, loading: 'lazy',
+            style: 'width:160px;height:160px;object-fit:contain;filter:drop-shadow(0 6px 16px rgba(0,0,0,0.18))',
+            onerror: function(){ this.src = SPRITE_PIXEL(p.natDex); this.style.cssText='width:120px;height:120px;object-fit:contain;image-rendering:pixelated'; }
+          })
+        )
+      ),
+      // Caption strip — white, like the bottom of a polaroid
+      el('div', { class: 'px-4 pt-3 pb-4 bg-white' },
+        el('div', { class: 'text-xs text-[#9aac7e] font-mono' }, 'Pokopia #' + (p.dex ?? '—')),
+        el('div', { class: 'flex items-start justify-between gap-2' },
+          el('div', { class: 'text-xl text-[#2b3a1d] uppercase tracking-wide leading-tight', style: 'font-family:"Luckiest Guy","Fredoka",sans-serif' }, p.displayName),
+          el('div', { class: 'flex items-center gap-1 shrink-0 -mt-1' }, ...p.types.map(typeChip))
+        )
       )
     )
   );
@@ -519,7 +556,7 @@ function viewPokemonDetail(id) {
     flavorRow = infoRow('Favorite flavor', p.flavor);
   } else {
     flavorRow = el('button', {
-      class: 'flex justify-between items-center gap-3 py-2 border-b border-[#c0d99a] last:border-0 w-full text-left active:bg-[#cde9b2]',
+      class: 'flex justify-between items-center gap-3 py-2 w-full text-left',
       'aria-expanded': isFlavorOpen ? 'true' : 'false',
       onclick: () => {
         state.flavorOpenFor = isFlavorOpen ? '' : flavorRowKey;
@@ -528,33 +565,29 @@ function viewPokemonDetail(id) {
     },
       el('span', { class: 'text-xs uppercase tracking-wide text-[#9aac7e]' }, 'Favorite flavor'),
       el('span', { class: 'text-sm text-[#2b3a1d] text-right flex-1' }, p.flavor),
-      el('span', { class: 'text-[#7AB951] text-xs -mr-1', html: isFlavorOpen ? '&#9652;' : '&#9662;' })
+      el('span', { class: '-mr-1', html: `<svg width="12" height="8" viewBox="0 0 12 8" style="display:block"><path fill="#7AB951" d="${isFlavorOpen ? 'M6 0L12 8H0Z' : 'M6 8L0 0h12z'}"/></svg>` })
     );
   }
 
-  // Drawer body: appears INSIDE the info card so it visually belongs to the flavor row.
-  // We mark each item row with `border-t` instead of border-b so the divider sits above each
-  // item — and the last item still inherits the card's bottom rounding.
-  const flavorDrawer = (isFlavorOpen && flavorData) ? el('div', { class: 'pb-2 anim-slide' },
-    el('div', { class: 'flex items-baseline justify-between pt-2' },
-      el('span', { class: 'text-[11px] uppercase tracking-wide text-[#7a8a60]' },
-        `Foods · ${flavorData.displayName}`),
-      el('span', { class: 'text-[11px] text-[#9aac7e]' }, `${flavorData.items.length} items`)
-    ),
-    el('div', { class: 'mt-2 -mx-4 border-t border-[#c0d99a] divide-y divide-[#c0d99a]' },
-      ...flavorData.items.map(it => el('div', { class: 'px-4 py-2 flex items-start gap-3' },
-        // Item image hotlinked from Serebii; collapse the slot on error so a missing image
-        // doesn't show a broken-image glyph (same pattern as favorites/litter views).
-        itemThumb(it.slug),
-        el('div', { class: 'flex-1 min-w-0' },
-          el('div', { class: 'text-[#2b3a1d] text-sm font-extrabold uppercase tracking-wide' }, it.name),
-          it.desc ? el('div', { class: 'text-xs text-[#7a8a60] mt-0.5 leading-snug' }, it.desc) : null
+  // Drawer body: always in the DOM when flavorData exists; open/closed toggled via CSS
+  // grid-template-rows so it animates smoothly without knowing content height in advance.
+  const flavorDrawer = flavorData ? el('div', { class: 'drawer-wrap' + (isFlavorOpen ? ' open' : '') },
+    el('div', { class: 'drawer-inner' },
+      el('div', { class: 'pb-2' },
+        el('div', { class: '-mx-4 border-t border-[#c0d99a] divide-y divide-[#c0d99a]' },
+          ...flavorData.items.map(it => el('div', { class: 'px-4 py-2 flex items-start gap-3' },
+            itemThumb(it.slug),
+            el('div', { class: 'flex-1 min-w-0' },
+              el('div', { class: 'text-[#2b3a1d] text-sm font-extrabold uppercase tracking-wide' }, it.name),
+              it.desc ? el('div', { class: 'text-xs text-[#7a8a60] mt-0.5 leading-snug' }, it.desc) : null
+            )
+          ))
         )
-      ))
+      )
     )
   ) : null;
 
-  const info = el('section', { class: 'mx-3 mt-3 rounded-2xl bg-white pop-card border border-[#c0d99a] px-4 anim-slide overflow-hidden' },
+  const info = el('section', { class: 'mx-6 mt-3 rounded-2xl bg-white pop-card border border-[#c0d99a] px-4 anim-slide overflow-hidden' },
     infoRow('Specialty', p.specialties.join(', ')),
     infoRow('Ideal habitat', p.habitat),
     flavorRow,
@@ -562,7 +595,7 @@ function viewPokemonDetail(id) {
     ...litterRows
   );
 
-  const favs = el('section', { class: 'mx-3 mt-4 anim-slide' },
+  const favs = el('section', { class: 'mx-6 mt-4 anim-slide' },
     el('div', { class: 'flex items-baseline justify-between px-1 mb-2' },
       el('h2', { class: 'text-sm font-semibold uppercase tracking-wide text-[#7a8a60]' }, 'Favorite things'),
       el('span', { class: 'text-xs text-[#9aac7e]' }, `${p.favorites.length} categories`)
@@ -686,7 +719,7 @@ function viewFavoritesIndex() {
       ...filteredLitter.map(slug => {
         const li = LITTER[slug];
         return el('button', {
-          class: 'w-full flex items-center gap-3 px-3 py-2.5 text-left active:bg-[#cde9b2]',
+          class: 'w-full flex items-center gap-3 px-3 py-2.5 text-left active:bg-[#cde9b2] transition-colors duration-100',
           onclick: () => go(`litter/${slug}`)
         },
           itemThumb(slug),
@@ -730,7 +763,7 @@ function viewFavoritesIndex() {
         // First item's image previews the flavor — a quick visual cue without bundling our own icons.
         const previewSlug = fl.items[0] && fl.items[0].slug;
         return el('button', {
-          class: 'w-full flex items-center gap-3 px-3 py-2.5 text-left active:bg-[#cde9b2]',
+          class: 'w-full flex items-center gap-3 px-3 py-2.5 text-left active:bg-[#cde9b2] transition-colors duration-100',
           onclick: () => go(`flavor/${slug}`)
         },
           itemThumb(previewSlug),
@@ -764,7 +797,7 @@ function viewFavoritesIndex() {
         // First item's image as a category thumbnail, matching the litter/flavors row layout.
         const previewSlug = f.items[0] && f.items[0].slug;
         return el('button', {
-          class: 'w-full flex items-center gap-3 px-3 py-2.5 text-left active:bg-[#cde9b2]',
+          class: 'w-full flex items-center gap-3 px-3 py-2.5 text-left active:bg-[#cde9b2] transition-colors duration-100',
           onclick: () => go(`favorite/${slug}`)
         },
           itemThumb(previewSlug),
@@ -914,7 +947,7 @@ function viewHabitats() {
         // Pick first 4 numbered Pokémon (natDex non-null) for the sprite preview strip.
         const sprites = POKEMON.filter(p => p.habitat === h && p.natDex).slice(0, 4);
         return el('button', {
-          class: `hab-${h} hab-card rounded-2xl border text-left active:scale-[0.98] transition flex flex-col overflow-hidden`,
+          class: `hab-${h} hab-card rounded-2xl border text-left press-card flex flex-col overflow-hidden`,
           onclick: () => { state.habitatFilter = h; saveState(); go('pokemon'); }
         },
           // Name + count at top
@@ -1010,7 +1043,10 @@ function render() {
   const selEnd   = focusKey ? focusEl.selectionEnd   : null;
 
   const app = document.getElementById('app');
+  const isRouteChange = !render._lastHash || render._lastHash !== location.hash;
   app.replaceChildren(view);
+  // Trigger page entry animation only on route changes, not on search/filter state updates.
+  if (isRouteChange) view.classList.add('anim-page');
 
   if (focusKey) {
     const target = app.querySelector('[data-focus="' + focusKey + '"]');
@@ -1019,6 +1055,30 @@ function render() {
       try { if (selStart != null) target.setSelectionRange(selStart, selEnd); }
       catch (e) { /* type=search on some browsers rejects setSelectionRange — safe to ignore */ }
     }
+  }
+
+  // Animate the flavor drawer open/close. Because render() does a full DOM swap, the new drawer
+  // element has no prior state for CSS to transition from. The two-frame trick gives it one:
+  // briefly apply the OPPOSITE state, force a reflow so the browser registers it, then restore
+  // the correct state — CSS now sees a genuine start→end and runs the transition.
+  const drawerWrap = app.querySelector('.drawer-wrap');
+  if (drawerWrap) {
+    const isOpen = drawerWrap.classList.contains('open');
+    const wasOpen = render._prevFlavorOpen || false;
+    if (isOpen !== wasOpen) {
+      if (isOpen) {
+        drawerWrap.classList.remove('open');
+        drawerWrap.offsetHeight; // force reflow
+        drawerWrap.classList.add('open');
+      } else {
+        drawerWrap.classList.add('open');
+        drawerWrap.offsetHeight; // force reflow
+        drawerWrap.classList.remove('open');
+      }
+    }
+    render._prevFlavorOpen = isOpen;
+  } else {
+    render._prevFlavorOpen = false;
   }
 
   // Scroll to top on route change (but not on every render — would jank typing into a sticky search)

@@ -15,22 +15,22 @@
 <title>Pokopia Dex</title>
 <!-- Tailwind via CDN: we accept the prod warning to keep zero-build deploy. -->
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- Pokopia branding fonts: Fredoka (rounded display for the wordmark) + Nunito (friendly body). -->
+<!-- Pokopia branding fonts: Luckiest Guy (bubbly display, matches official site) + Nunito (friendly body). Fredoka kept as font-stack fallback only. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  /* Pokopia palette — cream/grass/red/teal — sampled from the official site to evoke the brand
-     without bundling trademark assets. */
+  /* Pokopia palette — greens/forest/red/teal — derived from the official pokopia.pokemon.com
+     site colors (#c7e365 primary lime, #c4e5b4 muted green) diluted for comfortable reading. */
   :root {
-    --cream:     #fbf8eb;
-    --cream-2:   #f3eed7;
+    --cream:     #e4f5d0;   /* light spring green — page background */
+    --cream-2:   #cde9b2;   /* meadow green — hover states, secondary areas */
     --surface:   #ffffff;
     --ink:       #2b3a1d;   /* dark forest, body text */
     --ink-2:     #4a5a36;
     --muted:     #7a8a60;
     --muted-2:   #9aac7e;
-    --border:    #e0e5cc;
+    --border:    #c0d99a;   /* sage green — borders and dividers */
     --brand:     #7AB951;   /* grass green — primary brand */
     --brand-dk:  #5e9c39;
     --red:       #e63946;
@@ -49,7 +49,7 @@
   /* Pokopia wordmark — fallback used only when the official logo image hotlink fails (see
      pokopiaWordmark() in JS). Each "pokopia" letter is colored to echo the official logo's
      playful per-letter palette so the brand is still recognizable when the image is missing. */
-  .pokopia-wordmark { font-family: "Fredoka", "Nunito", sans-serif; font-weight: 700; line-height: 1; letter-spacing: 0.01em; display: inline-flex; align-items: baseline; gap: 0.35em; }
+  .pokopia-wordmark { font-family: "Luckiest Guy", "Fredoka", "Nunito", sans-serif; font-weight: 400; line-height: 1; letter-spacing: 0.03em; display: inline-flex; align-items: baseline; gap: 0.35em; }
   .pokopia-wordmark .pkmn { color: var(--ink); font-size: 0.55em; letter-spacing: 0.02em; }
   .pokopia-wordmark .word { display: inline-flex; }
   .pokopia-wordmark .word span { display: inline-block; -webkit-text-stroke: 1px #ffffff; text-shadow: 0 2px 0 rgba(0,0,0,0.08); }
@@ -72,7 +72,7 @@
   .hab-Warm  {background:linear-gradient(135deg,#ffedd5,#fb923caa);border:1px solid #ea580c;color:#7a2f00}
   .hab-Humid {background:linear-gradient(135deg,#d1fae5,#10b981aa);border:1px solid #047857;color:#0f4d35}
   .hab-Dry   {background:linear-gradient(135deg,#fef3c7,#d6a55aaa);border:1px solid #a16207;color:#6b3700}
-  .hab-Default{background:#f3eed7;border:1px solid var(--border);color:var(--ink-2)}
+  .hab-Default{background:#cde9b2;border:1px solid var(--border);color:var(--ink-2)}
 
   /* Bottom nav safe area */
   .bottom-nav { padding-bottom: max(env(safe-area-inset-bottom), 0.5rem); }
@@ -149,7 +149,9 @@ const state = {
   // The flavor-foods drawer on the detail page tracks open state per Pokémon key, so
   // toggling it on one Pokémon doesn't carry over when you navigate to another.
   flavorOpenFor: '',
-  // Persisted filters
+  // itemQuery is per-category (cleared on navigation); favQuery is the global Items tab search.
+  itemQuery: '',
+  favQuery:  '',
 };
 
 // Filter state is persisted to sessionStorage (per-tab, ephemeral) wrapped in try/catch.
@@ -196,6 +198,36 @@ function pokeKey(p) { return (p.natDex || '0') + ':' + p.displayName; }
 // All unique specialties for filter dropdown
 const ALL_SPECIALTIES = [...new Set(POKEMON.flatMap(p => p.specialties))].sort();
 
+// ---------- Component helpers ----------
+// itemThumb — standard 12×12 item image slot used in list rows. Returns null when no slug so
+// rows with missing slug data fall back to text-only without an empty placeholder box.
+// On image error the slot hides itself — no broken-image icon shown.
+function itemThumb(slug) {
+  if (!slug) return null;
+  return el('div', { class: 'shrink-0 w-12 h-12 rounded-md bg-[#cde9b2]/80 flex items-center justify-center overflow-hidden' },
+    el('img', {
+      src: ITEM_IMG(slug), alt: '', loading: 'lazy', referrerpolicy: 'no-referrer',
+      class: 'w-12 h-12 object-contain',
+      onerror: function(){ this.parentNode.style.display = 'none'; }
+    })
+  );
+}
+
+// pokemonGridCard — sprite + name tile for the 3-column "Pokémon that like/drop this" grids.
+function pokemonGridCard(p) {
+  return el('button', {
+    class: 'flex flex-col items-center gap-1 p-2 rounded-lg active:bg-[#cde9b2]',
+    onclick: () => go(`pokemon/${encodeURIComponent(pokeKey(p))}`)
+  },
+    el('img', {
+      src: SPRITE_PIXEL(p.natDex), alt: p.displayName, loading: 'lazy',
+      class: 'pixel-sprite w-12 h-12',
+      onerror: function(){ this.style.display='none'; }
+    }),
+    el('span', { class: 'text-[11px] text-[#2b3a1d] text-center leading-tight' }, p.displayName)
+  );
+}
+
 // ---------- Views ----------
 // Pokopia wordmark — uses the official logo image hotlinked from pokopia.pokemon.com, with the
 // CSS wordmark as a graceful fallback if the image ever fails to load (e.g. hotlinking blocked
@@ -240,10 +272,10 @@ function pokopiaWordmark(opts={}) {
 }
 
 function renderHeader(title, subtitle, opts={}) {
-  return el('header', { class: 'sticky top-0 z-20 bg-[#fbf8eb]/95 backdrop-blur border-b border-[#e0e5cc]' },
+  return el('header', { class: 'sticky top-0 z-20 bg-[#e4f5d0]/95 backdrop-blur border-b border-[#c0d99a]' },
     el('div', { class: 'px-4 pt-3 pb-2 flex items-center gap-2' },
       opts.back ? el('button', {
-        class: 'shrink-0 -ml-1 w-9 h-9 rounded-full flex items-center justify-center text-[#3d4d26] active:bg-[#e0e5cc]',
+        class: 'shrink-0 -ml-1 w-9 h-9 rounded-full flex items-center justify-center text-[#3d4d26] active:bg-[#c0d99a]',
         onclick: () => { if (history.length > 1) history.back(); else go('pokemon'); },
         'aria-label': 'Back'
       }, el('span', { html: '&#8592;', class: 'text-xl' })) : null,
@@ -251,10 +283,10 @@ function renderHeader(title, subtitle, opts={}) {
         // If `opts.brand` is set, render the official Pokopia logo (with CSS-wordmark fallback).
         opts.brand
           ? el('div', { class: 'flex items-center gap-2 -my-1' },
-              pokopiaWordmark({ height: 48 }),
-              el('span', { class: 'text-xs font-bold text-[#5e9c39] tracking-widest uppercase' }, 'Dex')
+              pokopiaWordmark({ height: 36 }),
+              el('span', { class: 'text-lg text-[#5e9c39] uppercase', style: 'font-family:"Luckiest Guy","Fredoka",sans-serif' }, 'Pokopia Dex')
             )
-          : el('h1', { class: 'text-lg font-bold text-[#2b3a1d] truncate', style: 'font-family:"Fredoka",sans-serif' }, title),
+          : el('h1', { class: 'text-xl text-[#2b3a1d] truncate uppercase tracking-wide', style: 'font-family:"Luckiest Guy","Fredoka",sans-serif' }, title),
         subtitle ? el('p', { class: 'text-xs text-[#7a8a60] truncate mt-0.5' }, subtitle) : null
       ),
       opts.right || null
@@ -275,7 +307,7 @@ function renderBottomNav(active) {
     }),
     el('span', { class: 'text-[10px] font-semibold' }, label)
   );
-  return el('nav', { class: 'bottom-nav sticky bottom-0 z-20 bg-[#fbf8eb]/95 backdrop-blur border-t border-[#e0e5cc] flex' },
+  return el('nav', { class: 'bottom-nav sticky bottom-0 z-20 bg-[#e4f5d0]/95 backdrop-blur border-t border-[#c0d99a] flex' },
     // Icons chosen to fit the Pokopia "cozy garden" vibe. ALL must be BMP glyphs so they render
     // on platforms without an emoji font (e.g. headless Chromium in CI). Tested: 🌿 (U+1F33F)
     // failed as tofu in Linux Chromium → switched to ☘ shamrock (U+2618).
@@ -298,12 +330,12 @@ function viewPokemonList() {
   if (state.specialtyFilter) list = list.filter(p => p.specialties.includes(state.specialtyFilter));
   if (tokens.length) list = list.filter(p => tokens.every(t => p._search.includes(t)));
 
-  const list_node = el('div', { class: 'divide-y divide-[#e0e5cc]' },
+  const list_node = el('div', { class: 'divide-y divide-[#c0d99a]' },
     ...list.map((p, i) => el('button', {
-      class: 'w-full flex items-center gap-3 px-4 py-2.5 text-left active:bg-[#f3eed7]',
+      class: 'w-full flex items-center gap-3 px-4 py-2.5 text-left active:bg-[#cde9b2]',
       onclick: () => go(`pokemon/${encodeURIComponent(pokeKey(p))}`)
     },
-      el('div', { class: 'shrink-0 w-14 h-14 rounded-lg bg-[#f3eed7]/80 flex items-center justify-center overflow-hidden' },
+      el('div', { class: 'shrink-0 w-14 h-14 rounded-lg bg-[#cde9b2]/80 flex items-center justify-center overflow-hidden' },
         el('img', {
           src: SPRITE_PIXEL(p.natDex), alt: p.displayName, loading: 'lazy',
           class: 'pixel-sprite w-12 h-12',
@@ -318,7 +350,7 @@ function viewPokemonList() {
         el('div', { class: 'mt-1 flex flex-wrap items-center gap-1.5' },
           ...p.types.map(typeChip),
           habitatPill(p.habitat),
-          ...p.specialties.map(s => el('span', { class: 'text-[10px] text-[#3d4d26] bg-[#e0e5cc] px-1.5 py-0.5 rounded' }, s))
+          ...p.specialties.map(s => el('span', { class: 'text-[10px] text-white bg-[#5e9c39] px-1.5 py-0.5 rounded font-semibold' }, s))
         )
       ),
       el('span', { class: 'text-[#c4cfa5]', html: '&rsaquo;' })
@@ -333,18 +365,18 @@ function viewPokemonList() {
     // the toggle keeps the active filter count visible even when the drawer is closed.
     (() => {
       const activeCount = (state.habitatFilter ? 1 : 0) + (state.specialtyFilter ? 1 : 0);
-      return el('div', { class: 'bg-[#fbf8eb] border-b border-[#e0e5cc] sticky top-[3.4rem] z-10' },
+      return el('div', { class: 'bg-[#e4f5d0] border-b border-[#c0d99a] sticky top-[3.4rem] z-10' },
         el('div', { class: 'p-3 flex gap-2 items-center' },
           el('input', {
             type: 'search', placeholder: 'Search by name, type, specialty…',
             value: state.search,
             'data-focus': 'main-search',
-            class: 'flex-1 min-w-0 px-3 py-2 rounded-lg bg-white border border-[#e0e5cc] text-[#2b3a1d] placeholder-[#9aac7e] outline-none focus:ring-2 focus:ring-[#7AB951]',
+            class: 'flex-1 min-w-0 px-3 py-2 rounded-lg bg-white border border-[#c0d99a] text-[#2b3a1d] placeholder-[#9aac7e] outline-none focus:ring-2 focus:ring-[#7AB951]',
             oninput: e => { state.search = e.target.value; saveState(); render(); }
           }),
           el('button', {
             class: 'shrink-0 flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg ' +
-                   (activeCount || state.filtersOpen ? 'bg-[#7AB951] text-[#2b3a1d]' : 'bg-white border border-[#e0e5cc] text-[#2b3a1d]') +
+                   (activeCount || state.filtersOpen ? 'bg-[#7AB951] text-[#2b3a1d]' : 'bg-white border border-[#c0d99a] text-[#2b3a1d]') +
                    ' active:opacity-80',
             'aria-expanded': state.filtersOpen ? 'true' : 'false',
             onclick: () => { state.filtersOpen = !state.filtersOpen; saveState(); render(); }
@@ -357,14 +389,14 @@ function viewPokemonList() {
         state.filtersOpen ? el('div', { class: 'px-3 pb-3 space-y-2 anim-slide' },
           el('div', { class: 'flex gap-2 text-sm' },
             el('select', {
-              class: 'flex-1 bg-white border border-[#e0e5cc] text-[#2b3a1d] rounded-lg px-2 py-1.5 outline-none',
+              class: 'flex-1 bg-white border border-[#c0d99a] text-[#2b3a1d] rounded-lg px-2 py-1.5 outline-none',
               onchange: e => { state.habitatFilter = e.target.value; saveState(); render(); }
             },
               el('option', { value: '' }, 'Any habitat'),
               ...HABITATS.map(h => el('option', { value: h, selected: state.habitatFilter === h }, h))
             ),
             el('select', {
-              class: 'flex-1 bg-white border border-[#e0e5cc] text-[#2b3a1d] rounded-lg px-2 py-1.5 outline-none',
+              class: 'flex-1 bg-white border border-[#c0d99a] text-[#2b3a1d] rounded-lg px-2 py-1.5 outline-none',
               onchange: e => { state.specialtyFilter = e.target.value; saveState(); render(); }
             },
               el('option', { value: '' }, 'Any specialty'),
@@ -401,11 +433,11 @@ function viewPokemonDetail(id) {
     ),
     el('div', { class: 'flex-1 min-w-0' },
       el('div', { class: 'text-xs text-[#3d4d26]/80 font-mono' }, 'Pokopia #' + (p.dex ?? '—')),
-      el('div', { class: 'text-xl font-semibold text-[#2b3a1d]' }, p.displayName),
+      el('div', { class: 'text-xl text-[#2b3a1d] uppercase tracking-wide', style: 'font-family:"Luckiest Guy","Fredoka",sans-serif' }, p.displayName),
       el('div', { class: 'mt-2 flex flex-wrap gap-1.5' }, ...p.types.map(typeChip)),
       el('div', { class: 'mt-2 flex flex-wrap gap-1.5' },
         habitatPill(p.habitat),
-        p.flavor ? el('span', { class: 'text-xs text-[#2b3a1d] bg-[#e0e5cc] px-2 py-0.5 rounded-full' }, '🍴 ' + p.flavor) : null
+        p.flavor ? el('span', { class: 'text-xs text-[#2b3a1d] bg-white/70 px-2 py-0.5 rounded-full font-semibold' }, '🍴 ' + p.flavor) : null
       )
     )
   );
@@ -413,11 +445,11 @@ function viewPokemonDetail(id) {
   // infoRow renders one stat. If onClick is provided, render as a button with a chevron so users
   // know the row drills into a detail view (used for "Litters" since each item has its own page).
   function infoRow(label, value, onClick) {
-    const base = 'flex justify-between items-center gap-3 py-2 border-b border-[#e0e5cc] last:border-0 w-full text-left';
+    const base = 'flex justify-between items-center gap-3 py-2 border-b border-[#c0d99a] last:border-0 w-full text-left';
     const labelEl = el('span', { class: 'text-xs uppercase tracking-wide text-[#9aac7e]' }, label);
     const valueEl = el('span', { class: 'text-sm text-[#2b3a1d] text-right flex-1' }, value || '—');
     if (onClick) {
-      return el('button', { class: base + ' active:bg-[#f3eed7]', onclick: onClick },
+      return el('button', { class: base + ' active:bg-[#cde9b2]', onclick: onClick },
         labelEl, valueEl,
         el('span', { class: 'text-[#9aac7e] -mr-1', html: '&rsaquo;' })
       );
@@ -447,7 +479,7 @@ function viewPokemonDetail(id) {
     flavorRow = infoRow('Favorite flavor', p.flavor);
   } else {
     flavorRow = el('button', {
-      class: 'flex justify-between items-center gap-3 py-2 border-b border-[#e0e5cc] last:border-0 w-full text-left active:bg-[#f3eed7]',
+      class: 'flex justify-between items-center gap-3 py-2 border-b border-[#c0d99a] last:border-0 w-full text-left active:bg-[#cde9b2]',
       'aria-expanded': isFlavorOpen ? 'true' : 'false',
       onclick: () => {
         state.flavorOpenFor = isFlavorOpen ? '' : flavorRowKey;
@@ -469,17 +501,11 @@ function viewPokemonDetail(id) {
         `Foods · ${flavorData.displayName}`),
       el('span', { class: 'text-[11px] text-[#9aac7e]' }, `${flavorData.items.length} items`)
     ),
-    el('div', { class: 'mt-2 -mx-4 border-t border-[#e0e5cc] divide-y divide-[#e0e5cc]' },
+    el('div', { class: 'mt-2 -mx-4 border-t border-[#c0d99a] divide-y divide-[#c0d99a]' },
       ...flavorData.items.map(it => el('div', { class: 'px-4 py-2 flex items-start gap-3' },
         // Item image hotlinked from Serebii; collapse the slot on error so a missing image
         // doesn't show a broken-image glyph (same pattern as favorites/litter views).
-        el('div', { class: 'shrink-0 w-12 h-12 rounded-md bg-[#f3eed7]/80 flex items-center justify-center overflow-hidden' },
-          el('img', {
-            src: ITEM_IMG(it.slug), alt: '', loading: 'lazy', referrerpolicy: 'no-referrer',
-            class: 'w-12 h-12 object-contain',
-            onerror: function(){ this.parentNode.style.display = 'none'; }
-          })
-        ),
+        itemThumb(it.slug),
         el('div', { class: 'flex-1 min-w-0' },
           el('div', { class: 'text-[#2b3a1d] text-sm font-medium' }, it.name),
           it.desc ? el('div', { class: 'text-xs text-[#7a8a60] mt-0.5 leading-snug' }, it.desc) : null
@@ -488,7 +514,7 @@ function viewPokemonDetail(id) {
     )
   ) : null;
 
-  const info = el('section', { class: 'mx-3 mt-3 rounded-2xl bg-white pop-card border border-[#e0e5cc] px-4 anim-slide overflow-hidden' },
+  const info = el('section', { class: 'mx-3 mt-3 rounded-2xl bg-white pop-card border border-[#c0d99a] px-4 anim-slide overflow-hidden' },
     infoRow('Specialty', p.specialties.join(', ')),
     infoRow('Ideal habitat', p.habitat),
     flavorRow,
@@ -502,14 +528,14 @@ function viewPokemonDetail(id) {
       el('span', { class: 'text-xs text-[#9aac7e]' }, `${p.favorites.length} categories`)
     ),
     p.favorites.length === 0
-      ? el('div', { class: 'rounded-2xl bg-white pop-card border border-[#e0e5cc] p-4 text-[#7a8a60] text-sm' },
+      ? el('div', { class: 'rounded-2xl bg-white pop-card border border-[#c0d99a] p-4 text-[#7a8a60] text-sm' },
           'No favorite categories listed for this Pokémon.')
-      : el('div', { class: 'rounded-2xl bg-white pop-card border border-[#e0e5cc] divide-y divide-[#e0e5cc] overflow-hidden' },
+      : el('div', { class: 'rounded-2xl bg-white pop-card border border-[#c0d99a] divide-y divide-[#c0d99a] overflow-hidden' },
           ...p.favorites.map(f => {
             const fav = f.slug ? FAVORITES[f.slug] : null;
             const itemCount = fav ? fav.items.length : 0;
             return el('button', {
-              class: 'w-full flex items-center justify-between gap-3 px-4 py-3 text-left active:bg-[#f3eed7]',
+              class: 'w-full flex items-center justify-between gap-3 px-4 py-3 text-left active:bg-[#cde9b2]',
               disabled: !f.slug,
               onclick: f.slug ? () => go(`favorite/${f.slug}`) : null
             },
@@ -536,7 +562,7 @@ function viewFavoriteDetail(slug) {
   const fav = FAVORITES[slug];
   if (!fav) return viewNotFound('Favorite category not found.');
 
-  const itemQuery = state.itemQuery || '';
+  const itemQuery = state.itemQuery;
   const filtered = itemQuery
     ? fav.items.filter(it => (it.name + ' ' + (it.desc||'')).toLowerCase().includes(itemQuery.toLowerCase()))
     : fav.items;
@@ -554,22 +580,12 @@ function viewFavoriteDetail(slug) {
       type: 'search', placeholder: 'Filter items…',
       value: itemQuery,
       'data-focus': 'item-filter',
-      class: 'w-full mb-2 px-3 py-2 rounded-lg bg-white border border-[#e0e5cc] text-[#2b3a1d] placeholder-[#9aac7e] outline-none focus:ring-2 focus:ring-[#7AB951]',
+      class: 'w-full mb-2 px-3 py-2 rounded-lg bg-white border border-[#c0d99a] text-[#2b3a1d] placeholder-[#9aac7e] outline-none focus:ring-2 focus:ring-[#7AB951]',
       oninput: e => { state.itemQuery = e.target.value; render(); }
     }),
-    el('div', { class: 'rounded-2xl bg-white pop-card border border-[#e0e5cc] divide-y divide-[#e0e5cc] overflow-hidden' },
+    el('div', { class: 'rounded-2xl bg-white pop-card border border-[#c0d99a] divide-y divide-[#c0d99a] overflow-hidden' },
       ...filtered.map(it => el('div', { class: 'px-4 py-2.5 flex items-start gap-3' },
-        // Item thumbnail (hotlinked from Serebii). The slug field was added in v1.1 — older cached
-        // data might not have it, so render the row without the image if slug is missing.
-        // On any load error (broken slug, Serebii down, hotlink blocked), hide the image and
-        // collapse the slot so the row falls back to text-only — no broken-image icon shown.
-        it.slug ? el('div', { class: 'shrink-0 w-12 h-12 rounded-md bg-[#f3eed7]/80 flex items-center justify-center overflow-hidden' },
-          el('img', {
-            src: ITEM_IMG(it.slug), alt: '', loading: 'lazy', referrerpolicy: 'no-referrer',
-            class: 'w-12 h-12 object-contain',
-            onerror: function(){ this.parentNode.style.display = 'none'; }
-          })
-        ) : null,
+        itemThumb(it.slug),
         el('div', { class: 'flex-1 min-w-0' },
           el('div', { class: 'text-[#2b3a1d] text-sm font-medium' }, it.name),
           it.desc ? el('div', { class: 'text-xs text-[#7a8a60] mt-0.5 leading-snug' }, it.desc) : null
@@ -584,23 +600,12 @@ function viewFavoriteDetail(slug) {
       el('h2', { class: 'text-sm font-semibold uppercase tracking-wide text-[#7a8a60]' }, 'Pokémon that like this'),
       el('span', { class: 'text-xs text-[#9aac7e]' }, liked.length + '')
     ),
-    el('div', { class: 'rounded-2xl bg-white pop-card border border-[#e0e5cc] overflow-hidden' },
+    el('div', { class: 'rounded-2xl bg-white pop-card border border-[#c0d99a] overflow-hidden' },
       el('div', { class: 'grid grid-cols-3 sm:grid-cols-4 gap-2 p-3' },
         ...liked.map(lp => {
           const full = POKEMON.find(x => x.dex === lp.dex && x.displayName === lp.name) ||
                        POKEMON.find(x => x.displayName === lp.name);
-          if (!full) return null;
-          return el('button', {
-            class: 'flex flex-col items-center gap-1 p-2 rounded-lg active:bg-[#f3eed7]',
-            onclick: () => go(`pokemon/${encodeURIComponent(pokeKey(full))}`)
-          },
-            el('img', {
-              src: SPRITE_PIXEL(full.natDex), alt: full.displayName, loading: 'lazy',
-              class: 'pixel-sprite w-12 h-12',
-              onerror: function(){ this.style.display='none'; }
-            }),
-            el('span', { class: 'text-[11px] text-[#2b3a1d] text-center leading-tight' }, full.displayName)
-          );
+          return full ? pokemonGridCard(full) : null;
         })
       )
     )
@@ -622,7 +627,7 @@ function viewFavoriteDetail(slug) {
 // Litter is shown first because it's more actionable — players usually open this tab knowing
 // what item they want, not which category they're shopping for.
 function viewFavoritesIndex() {
-  const q = (state.favQuery || '').toLowerCase();
+  const q = state.favQuery.toLowerCase();
   const slugs = Object.keys(FAVORITES).sort((a,b) =>
     FAVORITES[a].displayName.localeCompare(FAVORITES[b].displayName));
   const filtered = slugs.filter(s => FAVORITES[s].displayName.toLowerCase().includes(q));
@@ -637,22 +642,14 @@ function viewFavoritesIndex() {
       el('h2', { class: 'text-sm font-semibold uppercase tracking-wide text-[#7a8a60]' }, 'Litter drops'),
       el('span', { class: 'text-xs text-[#9aac7e]' }, `${litterSlugs.length} items`)
     ),
-    el('div', { class: 'mx-3 rounded-2xl bg-white pop-card border border-[#e0e5cc] divide-y divide-[#e0e5cc] overflow-hidden' },
+    el('div', { class: 'mx-3 rounded-2xl bg-white pop-card border border-[#c0d99a] divide-y divide-[#c0d99a] overflow-hidden' },
       ...filteredLitter.map(slug => {
         const li = LITTER[slug];
         return el('button', {
-          class: 'w-full flex items-center gap-3 px-3 py-2.5 text-left active:bg-[#f3eed7]',
+          class: 'w-full flex items-center gap-3 px-3 py-2.5 text-left active:bg-[#cde9b2]',
           onclick: () => go(`litter/${slug}`)
         },
-          // Item thumbnail (hotlinked from Serebii) — collapse on error so the row falls back to
-          // a clean text-only layout instead of showing a broken-image icon.
-          el('div', { class: 'shrink-0 w-12 h-12 rounded-md bg-[#f3eed7]/80 flex items-center justify-center overflow-hidden' },
-            el('img', {
-              src: ITEM_IMG(slug), alt: '', loading: 'lazy', referrerpolicy: 'no-referrer',
-              class: 'w-12 h-12 object-contain',
-              onerror: function(){ this.parentNode.style.display = 'none'; }
-            })
-          ),
+          itemThumb(slug),
           el('div', { class: 'flex-1 min-w-0' },
             el('div', { class: 'text-[#2b3a1d] text-base' }, li.name),
             el('div', { class: 'text-xs text-[#9aac7e] mt-0.5' },
@@ -680,22 +677,16 @@ function viewFavoritesIndex() {
       el('h2', { class: 'text-sm font-semibold uppercase tracking-wide text-[#7a8a60]' }, 'Flavors'),
       el('span', { class: 'text-xs text-[#9aac7e]' }, `${flavorKeys.length} flavors`)
     ),
-    el('div', { class: 'mx-3 rounded-2xl bg-white pop-card border border-[#e0e5cc] divide-y divide-[#e0e5cc] overflow-hidden' },
+    el('div', { class: 'mx-3 rounded-2xl bg-white pop-card border border-[#c0d99a] divide-y divide-[#c0d99a] overflow-hidden' },
       ...filteredFlavors.map(slug => {
         const fl = FLAVORS[slug];
         // First item's image previews the flavor — a quick visual cue without bundling our own icons.
         const previewSlug = fl.items[0] && fl.items[0].slug;
         return el('button', {
-          class: 'w-full flex items-center gap-3 px-3 py-2.5 text-left active:bg-[#f3eed7]',
+          class: 'w-full flex items-center gap-3 px-3 py-2.5 text-left active:bg-[#cde9b2]',
           onclick: () => go(`flavor/${slug}`)
         },
-          el('div', { class: 'shrink-0 w-12 h-12 rounded-md bg-[#f3eed7]/80 flex items-center justify-center overflow-hidden' },
-            previewSlug ? el('img', {
-              src: ITEM_IMG(previewSlug), alt: '', loading: 'lazy', referrerpolicy: 'no-referrer',
-              class: 'w-12 h-12 object-contain',
-              onerror: function(){ this.parentNode.style.display = 'none'; }
-            }) : null
-          ),
+          itemThumb(previewSlug),
           el('div', { class: 'flex-1 min-w-0' },
             el('div', { class: 'text-[#2b3a1d] text-base' }, fl.displayName),
             el('div', { class: 'text-xs text-[#9aac7e] mt-0.5' },
@@ -713,11 +704,11 @@ function viewFavoritesIndex() {
       el('h2', { class: 'text-sm font-semibold uppercase tracking-wide text-[#7a8a60]' }, 'Favorite categories'),
       el('span', { class: 'text-xs text-[#9aac7e]' }, `${slugs.length} categories`)
     ),
-    el('div', { class: 'divide-y divide-[#e0e5cc] border-y border-[#e0e5cc] bg-white' },
+    el('div', { class: 'divide-y divide-[#c0d99a] border-y border-[#c0d99a] bg-white' },
       ...filtered.map(slug => {
         const f = FAVORITES[slug];
         return el('button', {
-          class: 'w-full flex items-center justify-between gap-3 px-4 py-3 text-left active:bg-[#f3eed7]',
+          class: 'w-full flex items-center justify-between gap-3 px-4 py-3 text-left active:bg-[#cde9b2]',
           onclick: () => go(`favorite/${slug}`)
         },
           el('div', { class: 'flex-1 min-w-0' },
@@ -735,13 +726,13 @@ function viewFavoritesIndex() {
   return el('div', { class: 'flex flex-col min-h-screen' },
     renderHeader('Items',
       `${litterSlugs.length} litter · ${flavorKeys.length} flavors · ${slugs.length} categories`),
-    el('div', { class: 'p-3 bg-[#fbf8eb] border-b border-[#e0e5cc] sticky top-[3.4rem] z-10' },
+    el('div', { class: 'p-3 bg-[#e4f5d0] border-b border-[#c0d99a] sticky top-[3.4rem] z-10' },
       // One search box filters all three sections — keeps the layout tight on mobile.
       el('input', {
         type: 'search', placeholder: 'Search litter, flavors, categories…',
         value: state.favQuery || '',
         'data-focus': 'fav-search',
-        class: 'w-full px-3 py-2 rounded-lg bg-white border border-[#e0e5cc] text-[#2b3a1d] placeholder-[#9aac7e] outline-none focus:ring-2 focus:ring-[#7AB951]',
+        class: 'w-full px-3 py-2 rounded-lg bg-white border border-[#c0d99a] text-[#2b3a1d] placeholder-[#9aac7e] outline-none focus:ring-2 focus:ring-[#7AB951]',
         oninput: e => { state.favQuery = e.target.value; render(); }
       })
     ),
@@ -761,9 +752,9 @@ function viewFlavorDetail(slug) {
 
   const header = renderHeader(fl.displayName, `${fl.items.length} foods`, { back: true });
 
-  const hero = el('section', { class: 'mx-3 mt-3 rounded-2xl bg-white pop-card border border-[#e0e5cc] p-4 anim-slide' },
+  const hero = el('section', { class: 'mx-3 mt-3 rounded-2xl bg-white pop-card border border-[#c0d99a] p-4 anim-slide' },
     el('div', { class: 'text-xs uppercase tracking-wide text-[#9aac7e]' }, 'Flavor'),
-    el('div', { class: 'text-xl font-bold text-[#2b3a1d]', style: 'font-family:"Fredoka",sans-serif' }, fl.displayName),
+    el('div', { class: 'text-xl text-[#2b3a1d] uppercase tracking-wide', style: 'font-family:"Luckiest Guy","Fredoka",sans-serif' }, fl.displayName),
     el('div', { class: 'text-xs text-[#7a8a60] mt-1' },
       slug === 'none'
         ? 'Foods with no specific flavor — generally satisfying to any Pokémon.'
@@ -775,15 +766,9 @@ function viewFlavorDetail(slug) {
       el('h2', { class: 'text-sm font-semibold uppercase tracking-wide text-[#7a8a60]' }, 'Foods'),
       el('span', { class: 'text-xs text-[#9aac7e]' }, fl.items.length + '')
     ),
-    el('div', { class: 'rounded-2xl bg-white pop-card border border-[#e0e5cc] divide-y divide-[#e0e5cc] overflow-hidden' },
+    el('div', { class: 'rounded-2xl bg-white pop-card border border-[#c0d99a] divide-y divide-[#c0d99a] overflow-hidden' },
       ...fl.items.map(it => el('div', { class: 'px-4 py-2.5 flex items-start gap-3' },
-        el('div', { class: 'shrink-0 w-12 h-12 rounded-md bg-[#f3eed7]/80 flex items-center justify-center overflow-hidden' },
-          el('img', {
-            src: ITEM_IMG(it.slug), alt: '', loading: 'lazy', referrerpolicy: 'no-referrer',
-            class: 'w-12 h-12 object-contain',
-            onerror: function(){ this.parentNode.style.display = 'none'; }
-          })
-        ),
+        itemThumb(it.slug),
         el('div', { class: 'flex-1 min-w-0' },
           el('div', { class: 'text-[#2b3a1d] text-sm font-medium' }, it.name),
           it.desc ? el('div', { class: 'text-xs text-[#7a8a60] mt-0.5 leading-snug' }, it.desc) : null
@@ -807,8 +792,8 @@ function viewLitterDetail(slug) {
 
   const header = renderHeader(li.name, `Litter drop · ${li.pokemon.length} Pokémon`, { back: true });
 
-  const hero = el('section', { class: 'mx-3 mt-3 rounded-2xl bg-white pop-card border border-[#e0e5cc] p-4 flex items-center gap-4 anim-slide' },
-    el('div', { class: 'shrink-0 w-20 h-20 rounded-xl bg-[#f3eed7]/80 flex items-center justify-center overflow-hidden' },
+  const hero = el('section', { class: 'mx-3 mt-3 rounded-2xl bg-white pop-card border border-[#c0d99a] p-4 flex items-center gap-4 anim-slide' },
+    el('div', { class: 'shrink-0 w-20 h-20 rounded-xl bg-[#cde9b2]/80 flex items-center justify-center overflow-hidden' },
       el('img', {
         src: ITEM_IMG(slug), alt: li.name, loading: 'eager', referrerpolicy: 'no-referrer',
         class: 'w-20 h-20 object-contain',
@@ -817,7 +802,7 @@ function viewLitterDetail(slug) {
     ),
     el('div', { class: 'flex-1 min-w-0' },
       el('div', { class: 'text-xs uppercase tracking-wide text-[#9aac7e]' }, 'Litter item'),
-      el('div', { class: 'text-xl font-bold text-[#2b3a1d]', style: 'font-family:"Fredoka",sans-serif' }, li.name),
+      el('div', { class: 'text-xl text-[#2b3a1d] uppercase tracking-wide', style: 'font-family:"Luckiest Guy","Fredoka",sans-serif' }, li.name),
       el('div', { class: 'text-xs text-[#7a8a60] mt-1' },
         `Dropped by ${li.pokemon.length} Pokémon with the Litter specialty.`)
     )
@@ -828,25 +813,12 @@ function viewLitterDetail(slug) {
       el('h2', { class: 'text-sm font-semibold uppercase tracking-wide text-[#7a8a60]' }, 'Pokémon that drop this'),
       el('span', { class: 'text-xs text-[#9aac7e]' }, li.pokemon.length + '')
     ),
-    el('div', { class: 'rounded-2xl bg-white pop-card border border-[#e0e5cc] overflow-hidden' },
+    el('div', { class: 'rounded-2xl bg-white pop-card border border-[#c0d99a] overflow-hidden' },
       el('div', { class: 'grid grid-cols-3 sm:grid-cols-4 gap-2 p-3' },
         ...li.pokemon.map(lp => {
-          // Same lookup pattern as viewFavoriteDetail's likedBy grid (favors dex+name match,
-          // falls back to name only since some Pokémon have dex=null).
           const full = POKEMON.find(x => x.dex === lp.dex && x.displayName === lp.name) ||
                        POKEMON.find(x => x.displayName === lp.name);
-          if (!full) return null;
-          return el('button', {
-            class: 'flex flex-col items-center gap-1 p-2 rounded-lg active:bg-[#f3eed7]',
-            onclick: () => go(`pokemon/${encodeURIComponent(pokeKey(full))}`)
-          },
-            el('img', {
-              src: SPRITE_PIXEL(full.natDex), alt: full.displayName, loading: 'lazy',
-              class: 'pixel-sprite w-12 h-12',
-              onerror: function(){ this.style.display='none'; }
-            }),
-            el('span', { class: 'text-[11px] text-[#2b3a1d] text-center leading-tight' }, full.displayName)
-          );
+          return full ? pokemonGridCard(full) : null;
         })
       )
     )
@@ -884,17 +856,17 @@ function viewAbout() {
   return el('div', { class: 'flex flex-col min-h-screen' },
     renderHeader('About'),
     el('div', { class: 'flex-1 scroll-area p-4 space-y-4 text-sm text-[#3d4d26] leading-relaxed' },
-      el('div', { class: 'rounded-2xl bg-white pop-card border border-[#e0e5cc] p-4' },
+      el('div', { class: 'rounded-2xl bg-white pop-card border border-[#c0d99a] p-4' },
         el('h2', { class: 'text-[#2b3a1d] font-semibold mb-2' }, 'Pokopia Dex'),
         el('p', {}, 'A quick companion guide for the Nintendo Switch 2 game Pokémon Pokopia. Look up a Pokémon to see their specialty, ideal habitat, favorite flavor, and what kinds of items they like — then tap a favorite category to see which specific items qualify.')
       ),
-      el('div', { class: 'rounded-2xl bg-white pop-card border border-[#e0e5cc] p-4 space-y-1' },
+      el('div', { class: 'rounded-2xl bg-white pop-card border border-[#c0d99a] p-4 space-y-1' },
         el('h3', { class: 'text-[#2b3a1d] font-semibold mb-1' }, 'Data'),
         el('div', {}, `· ${POKEMON.length} Pokémon`),
         el('div', {}, `· ${Object.keys(FAVORITES).length} favorite categories`),
         el('div', {}, `· ${Object.values(FAVORITES).reduce((n,f)=>n+f.items.length,0)} catalogued items`)
       ),
-      el('div', { class: 'rounded-2xl bg-white pop-card border border-[#e0e5cc] p-4 space-y-2' },
+      el('div', { class: 'rounded-2xl bg-white pop-card border border-[#c0d99a] p-4 space-y-2' },
         el('h3', { class: 'text-[#2b3a1d] font-semibold mb-1' }, 'Credits'),
         el('p', {}, 'Pokémon data compiled from a community spreadsheet. Favorite-item lists and item images served from ',
           el('a', { href: 'https://www.serebii.net/pokemonpokopia/favorites.shtml', class: 'text-[#5e9c39] underline', target: '_blank', rel: 'noopener' }, 'Serebii.net'),
@@ -921,6 +893,11 @@ function viewNotFound(msg) {
 // ---------- Router / mount ----------
 function render() {
   const r = parseHash();
+  // Clear the per-category item filter when navigating to a different route so it doesn't
+  // bleed across from one favorite category to another.
+  if (render._lastHash && render._lastHash !== location.hash) {
+    state.itemQuery = '';
+  }
   let view;
   if (r.view === '' || r.view === 'pokemon' && !r.id) view = viewPokemonList();
   else if (r.view === 'pokemon' && r.id) view = viewPokemonDetail(r.id);

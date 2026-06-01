@@ -96,7 +96,7 @@
   .press-card { transition: transform 120ms ease, box-shadow 120ms ease; }
   .press-card:active { transform: scale(0.97); }
   /* Smooth height animation for drawers — grid-template-rows trick animates 0→auto cleanly */
-  .drawer-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.22s ease; }
+  .drawer-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.32s ease; }
   .drawer-wrap.open { grid-template-rows: 1fr; }
   .drawer-inner { overflow: hidden; min-height: 0; }
   /* Hide native select chevron + replace with a green one matching the theme */
@@ -486,9 +486,9 @@ function viewPokemonDetail(id) {
     Humid: 'linear-gradient(160deg,#dcfce7,#86efac)', Dry: 'linear-gradient(160deg,#fefce8,#fcd34d88)',
     Default:'linear-gradient(160deg,#e4f5d0,#cde9b2)',
   };
-  const tiltDeg = (p.natDex ? (p.natDex % 2 === 0 ? -1.8 : 1.8) : -1.8);
+  const tiltDeg = -1.8;
   const hero = el('div', {
-    class: 'mx-5 mt-4 mb-8 anim-slide',
+    class: 'mx-5 mt-4 mb-8',
     style: `transform:rotate(${tiltDeg}deg)`
   },
     el('div', {
@@ -948,7 +948,8 @@ function viewHabitats() {
         const sprites = POKEMON.filter(p => p.habitat === h && p.natDex).slice(0, 4);
         return el('button', {
           class: `hab-${h} hab-card rounded-2xl border text-left press-card flex flex-col overflow-hidden`,
-          onclick: () => { state.habitatFilter = h; saveState(); go('pokemon'); }
+          onclick: () => { state.habitatFilter = h; saveState(); go('pokemon'); },
+          ontouchstart: function(){}
         },
           // Name + count at top
           el('div', { class: 'p-3 pb-1' },

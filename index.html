@@ -87,7 +87,7 @@
   @keyframes slideUp { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   .anim-slide { animation: slideUp .18s ease-out; }
   /* Hide native select chevron + replace with a green one matching the theme */
-  select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%237AB951' d='M6 8L0 0h12z'/></svg>"); background-repeat: no-repeat; background-position: right 0.6rem center; padding-right: 1.75rem; }
+  select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='15' height='10' viewBox='0 0 12 8'><path fill='%237AB951' d='M6 8L0 0h12z'/></svg>"); background-repeat: no-repeat; background-position: right 0.6rem center; padding-right: 1.9rem; }
   /* Card shadow with downward offset — echoes the 3D sticker feel of Pokopia UI */
   .pop-card { box-shadow: 0 3px 0 rgba(43,58,29,0.10), 0 6px 20px rgba(43,58,29,0.08); }
 </style>
@@ -385,7 +385,7 @@ function viewPokemonList() {
           ...p.specialties.map(s => el('span', { class: 'text-xs text-white bg-[#5e9c39] px-2 py-0.5 rounded font-semibold' }, s))
         )
       ),
-      el('span', { class: 'text-[#c4cfa5]', html: '&rsaquo;' })
+      el('span', { class: 'text-[#c4cfa5] text-xl', html: '&rsaquo;' })
     )),
     list.length === 0 ? el('div', { class: 'p-8 text-center text-[#9aac7e] text-sm' }, 'No Pokémon match those filters.') : null
   );
@@ -491,7 +491,7 @@ function viewPokemonDetail(id) {
     if (onClick) {
       return el('button', { class: base + ' active:bg-[#cde9b2]', onclick: onClick },
         labelEl, valueEl,
-        el('span', { class: 'text-[#9aac7e] -mr-1', html: '&rsaquo;' })
+        el('span', { class: 'text-[#9aac7e] -mr-1 text-xl', html: '&rsaquo;' })
       );
     }
     return el('div', { class: base }, labelEl, valueEl);
@@ -547,7 +547,7 @@ function viewPokemonDetail(id) {
         // doesn't show a broken-image glyph (same pattern as favorites/litter views).
         itemThumb(it.slug),
         el('div', { class: 'flex-1 min-w-0' },
-          el('div', { class: 'text-[#2b3a1d] text-sm font-medium' }, it.name),
+          el('div', { class: 'text-[#2b3a1d] text-sm font-extrabold uppercase tracking-wide' }, it.name),
           it.desc ? el('div', { class: 'text-xs text-[#7a8a60] mt-0.5 leading-snug' }, it.desc) : null
         )
       ))
@@ -580,11 +580,11 @@ function viewPokemonDetail(id) {
               onclick: f.slug ? () => go(`favorite/${f.slug}`) : null
             },
               el('div', { class: 'flex-1 min-w-0' },
-                el('div', { class: 'text-[#2b3a1d] text-base' }, f.name),
+                el('div', { class: 'text-[#2b3a1d] text-base font-extrabold uppercase tracking-wide' }, f.name),
                 el('div', { class: 'text-xs text-[#9aac7e] mt-0.5' },
                   f.slug ? `${itemCount} qualifying item${itemCount===1?'':'s'}` : 'No data available')
               ),
-              el('span', { class: 'text-[#9aac7e]', html: '&rsaquo;' })
+              el('span', { class: 'text-[#9aac7e] text-xl', html: '&rsaquo;' })
             );
           })
         )
@@ -627,7 +627,7 @@ function viewFavoriteDetail(slug) {
       ...filtered.map(it => el('div', { class: 'px-4 py-2.5 flex items-start gap-3' },
         itemThumb(it.slug),
         el('div', { class: 'flex-1 min-w-0' },
-          el('div', { class: 'text-[#2b3a1d] text-sm font-medium' }, it.name),
+          el('div', { class: 'text-[#2b3a1d] text-sm font-extrabold uppercase tracking-wide' }, it.name),
           it.desc ? el('div', { class: 'text-xs text-[#7a8a60] mt-0.5 leading-snug' }, it.desc) : null
         )
       )),
@@ -677,7 +677,7 @@ function viewFavoritesIndex() {
     LITTER[a].name.localeCompare(LITTER[b].name));
   const filteredLitter = litterSlugs.filter(s => LITTER[s].name.toLowerCase().includes(q));
 
-  const litterSection = el('section', { class: 'pt-3 anim-slide' },
+  const litterSection = el('section', { id: 'sec-litter', style: 'scroll-margin-top:150px', class: 'pt-3 anim-slide' },
     el('div', { class: 'flex items-baseline justify-between px-4 mb-2' },
       el('h2', { class: 'text-sm font-semibold uppercase tracking-wide text-[#7a8a60]' }, 'Litter drops'),
       el('span', { class: 'text-xs text-[#9aac7e]' }, `${litterSlugs.length} items`)
@@ -691,11 +691,18 @@ function viewFavoritesIndex() {
         },
           itemThumb(slug),
           el('div', { class: 'flex-1 min-w-0' },
-            el('div', { class: 'text-[#2b3a1d] text-base' }, li.name),
-            el('div', { class: 'text-xs text-[#9aac7e] mt-0.5' },
-              `dropped by ${li.pokemon.length} Pokémon`)
+            el('div', { class: 'text-[#2b3a1d] text-base font-extrabold uppercase tracking-wide' }, li.name),
+            // Preview strip of the Pokémon that drop this item (replaces the "dropped by N" text).
+            // overflow-hidden clips the row instead of wrapping if there are many droppers.
+            el('div', { class: 'flex items-center gap-1 mt-1 overflow-hidden' },
+              ...li.pokemon.filter(lp => lp.natDex).map(lp => el('img', {
+                src: SPRITE_PIXEL(lp.natDex), alt: lp.name, title: lp.name, loading: 'lazy',
+                class: 'pixel-sprite', style: 'height:28px;width:28px;object-fit:contain;flex-shrink:0',
+                onerror: function(){ this.style.display='none'; }
+              }))
+            )
           ),
-          el('span', { class: 'text-[#9aac7e]', html: '&rsaquo;' })
+          el('span', { class: 'text-[#9aac7e] text-xl', html: '&rsaquo;' })
         );
       }),
       filteredLitter.length === 0 ? el('div', { class: 'p-6 text-center text-[#9aac7e] text-sm' }, 'No litter items match.') : null
@@ -712,7 +719,7 @@ function viewFavoritesIndex() {
     return FLAVORS[a].displayName.localeCompare(FLAVORS[b].displayName);
   });
   const filteredFlavors = flavorKeys.filter(s => FLAVORS[s].displayName.toLowerCase().includes(q));
-  const flavorsSection = el('section', { class: 'pt-5 anim-slide' },
+  const flavorsSection = el('section', { id: 'sec-flavors', style: 'scroll-margin-top:150px', class: 'pt-5 anim-slide' },
     el('div', { class: 'flex items-baseline justify-between px-4 mb-2' },
       el('h2', { class: 'text-sm font-semibold uppercase tracking-wide text-[#7a8a60]' }, 'Flavors'),
       el('span', { class: 'text-xs text-[#9aac7e]' }, `${flavorKeys.length} flavors`)
@@ -728,53 +735,79 @@ function viewFavoritesIndex() {
         },
           itemThumb(previewSlug),
           el('div', { class: 'flex-1 min-w-0' },
-            el('div', { class: 'text-[#2b3a1d] text-base' }, fl.displayName),
-            el('div', { class: 'text-xs text-[#9aac7e] mt-0.5' },
-              `${fl.items.length} food${fl.items.length===1?'':'s'}`)
+            el('div', { class: 'text-[#2b3a1d] text-base font-extrabold uppercase tracking-wide' }, fl.displayName),
+            // Preview strip of the foods matching this flavor (replaces the "N foods" text).
+            // overflow-hidden clips the row instead of wrapping if there are many foods.
+            el('div', { class: 'flex items-center gap-1 mt-1 overflow-hidden' },
+              ...fl.items.filter(it => it.slug).map(it => el('img', {
+                src: ITEM_IMG(it.slug), alt: it.name, title: it.name, loading: 'lazy', referrerpolicy: 'no-referrer',
+                style: 'height:24px;width:24px;object-fit:contain;flex-shrink:0',
+                onerror: function(){ this.style.display='none'; }
+              }))
+            )
           ),
-          el('span', { class: 'text-[#9aac7e]', html: '&rsaquo;' })
+          el('span', { class: 'text-[#9aac7e] text-xl', html: '&rsaquo;' })
         );
       }),
       filteredFlavors.length === 0 ? el('div', { class: 'p-6 text-center text-[#9aac7e] text-sm' }, 'No flavors match.') : null
     )
   );
 
-  const favSection = el('section', { class: 'pt-5 anim-slide' },
+  const favSection = el('section', { id: 'sec-categories', style: 'scroll-margin-top:150px', class: 'pt-5 anim-slide' },
     el('div', { class: 'flex items-baseline justify-between px-4 mb-2' },
       el('h2', { class: 'text-sm font-semibold uppercase tracking-wide text-[#7a8a60]' }, 'Favorite categories'),
       el('span', { class: 'text-xs text-[#9aac7e]' }, `${slugs.length} categories`)
     ),
-    el('div', { class: 'divide-y divide-[#c0d99a] border-y border-[#c0d99a] bg-white' },
+    el('div', { class: 'mx-3 rounded-2xl bg-white pop-card border border-[#c0d99a] divide-y divide-[#c0d99a] overflow-hidden' },
       ...filtered.map(slug => {
         const f = FAVORITES[slug];
+        // First item's image as a category thumbnail, matching the litter/flavors row layout.
+        const previewSlug = f.items[0] && f.items[0].slug;
         return el('button', {
-          class: 'w-full flex items-center justify-between gap-3 px-4 py-3 text-left active:bg-[#cde9b2]',
+          class: 'w-full flex items-center gap-3 px-3 py-2.5 text-left active:bg-[#cde9b2]',
           onclick: () => go(`favorite/${slug}`)
         },
+          itemThumb(previewSlug),
           el('div', { class: 'flex-1 min-w-0' },
-            el('div', { class: 'text-[#2b3a1d] text-base' }, f.displayName),
+            el('div', { class: 'text-[#2b3a1d] text-base font-extrabold uppercase tracking-wide' }, f.displayName),
             el('div', { class: 'text-xs text-[#9aac7e] mt-0.5' },
               `${f.items.length} item${f.items.length===1?'':'s'} · liked by ${f.likedBy.length} Pokémon`)
           ),
-          el('span', { class: 'text-[#9aac7e]', html: '&rsaquo;' })
+          el('span', { class: 'text-[#9aac7e] text-xl', html: '&rsaquo;' })
         );
       }),
       filtered.length === 0 ? el('div', { class: 'p-8 text-center text-[#9aac7e] text-sm' }, 'No categories match.') : null
     )
   );
 
+  // Anchor chips: tap to jump to a section. The page uses window scroll (sticky header), so
+  // scrollIntoView scrolls the window; each section carries scroll-margin-top so it lands just
+  // below the sticky header+search+chips stack instead of hidden beneath it.
+  const anchorNav = el('div', { class: 'flex gap-2 px-3 pb-2 overflow-x-auto' },
+    ...[['sec-litter','Litter'],['sec-flavors','Flavors'],['sec-categories','Categories']].map(([id,label]) =>
+      el('button', {
+        class: 'shrink-0 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full bg-white border border-[#c0d99a] text-[#3d4d26] active:bg-[#cde9b2]',
+        onclick: () => { const t = document.getElementById(id); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      }, label)
+    )
+  );
+
   return el('div', { class: 'flex flex-col min-h-screen' },
-    renderHeader('Items',
-      `${litterSlugs.length} litter · ${flavorKeys.length} flavors · ${slugs.length} categories`),
-    el('div', { class: 'p-3 bg-[#e4f5d0] border-b border-[#c0d99a] sticky top-[3.4rem] z-10' },
+    renderHeader('Items'),
+    // Sticky block: search + anchor chips. top-[49px] matches the single-line header height so the
+    // search stays flush beneath it (same bg) without being shoved under when stuck.
+    el('div', { class: 'bg-[#e4f5d0] border-b border-[#c0d99a] sticky top-[49px] z-10' },
       // One search box filters all three sections — keeps the layout tight on mobile.
-      el('input', {
-        type: 'search', placeholder: 'Search litter, flavors, categories…',
-        value: state.favQuery || '',
-        'data-focus': 'fav-search',
-        class: 'w-full px-3 py-2 rounded-lg bg-white border border-[#c0d99a] text-[#2b3a1d] placeholder-[#9aac7e] outline-none focus:ring-2 focus:ring-[#7AB951]',
-        oninput: e => { state.favQuery = e.target.value; render(); }
-      })
+      el('div', { class: 'px-3 pt-3 pb-2' },
+        el('input', {
+          type: 'search', placeholder: 'Search litter, flavors, categories…',
+          value: state.favQuery || '',
+          'data-focus': 'fav-search',
+          class: 'w-full px-3 py-2 rounded-lg bg-white border border-[#c0d99a] text-[#2b3a1d] placeholder-[#9aac7e] outline-none focus:ring-2 focus:ring-[#7AB951]',
+          oninput: e => { state.favQuery = e.target.value; render(); }
+        })
+      ),
+      anchorNav
     ),
     // Section order: Litter (most actionable) → Flavors (small, valuable for cooking decisions)
     // → Favorite Categories (largest pool, biggest scroll target — last).
@@ -810,7 +843,7 @@ function viewFlavorDetail(slug) {
       ...fl.items.map(it => el('div', { class: 'px-4 py-2.5 flex items-start gap-3' },
         itemThumb(it.slug),
         el('div', { class: 'flex-1 min-w-0' },
-          el('div', { class: 'text-[#2b3a1d] text-sm font-medium' }, it.name),
+          el('div', { class: 'text-[#2b3a1d] text-sm font-extrabold uppercase tracking-wide' }, it.name),
           it.desc ? el('div', { class: 'text-xs text-[#7a8a60] mt-0.5 leading-snug' }, it.desc) : null
         )
       ))

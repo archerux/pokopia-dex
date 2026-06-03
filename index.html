@@ -364,7 +364,7 @@ function renderBottomNav(active) {
     const isActive = active === key;
     return el('button', {
       class: `flex-1 py-2 flex flex-col items-center gap-0.5 active:opacity-70 transition-opacity duration-150`,
-      onclick: () => go(key)
+      onclick: () => { track('nav_tab', { tab: key }); go(key); }
     },
       el('div', {
         class: 'w-10 h-8 rounded-full flex items-center justify-center ' + (isActive ? 'bg-[#7AB951]/15' : '')
@@ -449,7 +449,13 @@ function viewPokemonList() {
             value: state.search,
             'data-focus': 'main-search',
             class: 'flex-1 min-w-0 px-3 py-2 rounded-lg bg-white border border-[#c0d99a] text-[#2b3a1d] placeholder-[#9aac7e] outline-none focus:ring-2 focus:ring-[#7AB951]',
-            oninput: e => { state.search = e.target.value; saveState(); render(); }
+            oninput: e => {
+              state.search = e.target.value; saveState(); render();
+              clearTimeout(render._searchTimer);
+              render._searchTimer = setTimeout(() => {
+                if (state.search) track('search', { search_term: state.search });
+              }, 1000);
+            }
           }),
           el('button', {
             class: 'shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg border transition-all duration-150 ' +
@@ -469,14 +475,14 @@ function viewPokemonList() {
           el('div', { class: 'flex gap-2 text-sm' },
             el('select', {
               class: 'flex-1 bg-white border border-[#c0d99a] text-[#2b3a1d] rounded-lg px-2 py-1.5 outline-none',
-              onchange: e => { state.habitatFilter = e.target.value; saveState(); render(); }
+              onchange: e => { state.habitatFilter = e.target.value; saveState(); render(); if (state.habitatFilter) track('filter_habitat', { habitat: state.habitatFilter }); }
             },
               el('option', { value: '' }, 'Any habitat'),
               ...HABITATS.map(h => el('option', { value: h, selected: state.habitatFilter === h }, h))
             ),
             el('select', {
               class: 'flex-1 bg-white border border-[#c0d99a] text-[#2b3a1d] rounded-lg px-2 py-1.5 outline-none',
-              onchange: e => { state.specialtyFilter = e.target.value; saveState(); render(); }
+              onchange: e => { state.specialtyFilter = e.target.value; saveState(); render(); if (state.specialtyFilter) track('filter_specialty', { specialty: state.specialtyFilter }); }
             },
               el('option', { value: '' }, 'Any specialty'),
               ...ALL_SPECIALTIES.map(s => el('option', { value: s, selected: state.specialtyFilter === s }, s))
@@ -583,6 +589,7 @@ function viewPokemonDetail(id) {
       class: `flex justify-between items-center gap-3 py-2 w-full text-left${litterRows.length ? ' border-b border-[#c0d99a]' : ''}`,
       'aria-expanded': isFlavorOpen ? 'true' : 'false',
       onclick: () => {
+        if (!isFlavorOpen) track('open_flavor_drawer', { pokemon: p.displayName, flavor: p.flavor });
         state.flavorOpenFor = isFlavorOpen ? '' : flavorRowKey;
         saveState(); render();
       }
@@ -970,7 +977,7 @@ function viewHabitats() {
         const sprites = POKEMON.filter(p => p.habitat === h && p.natDex).slice(0, 4);
         return el('button', {
           class: `hab-${h} hab-card rounded-2xl border text-left press-card flex flex-col overflow-hidden`,
-          onclick: () => { state.habitatFilter = h; state.filtersOpen = true; saveState(); go('pokemon'); },
+          onclick: () => { track('tap_habitat_card', { habitat: h }); state.habitatFilter = h; state.filtersOpen = true; saveState(); go('pokemon'); },
           ontouchstart: function(){}
         },
           // Name + count at top
@@ -1067,12 +1074,19 @@ function render() {
 
   const app = document.getElementById('app');
   const isRouteChange = !render._lastHash || render._lastHash !== location.hash;
-  // Reset scroll on route change.
+  // Reset scroll + fire analytics on route change.
   if (isRouteChange) {
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
     render._lastHash = location.hash;
+    // Update GA4 with the current hash path (hash routing doesn't trigger automatic page_view).
+    if (typeof gtag === 'function') gtag('config', 'G-XEY7YYXZWB', { page_path: location.hash });
+    // Content-specific events for deeper reporting.
+    if (r.view === 'pokemon' && r.id)   track('view_pokemon',   { pokemon: decodeURIComponent(r.id).split(':')[1] });
+    if (r.view === 'favorite' && r.id)  track('view_category',  { category: r.id });
+    if (r.view === 'litter' && r.id)    track('view_litter',    { item: r.id });
+    if (r.view === 'flavor' && r.id)    track('view_flavor',    { flavor: r.id });
     // Arm the visualViewport guard so the debounced handler below can catch the
     // toolbar-reappear offset (Chrome bumps scrollY by ~56px when its toolbar
     // animates back in after we reset to 0).
@@ -1121,6 +1135,11 @@ function render() {
 
 if (history.scrollRestoration) history.scrollRestoration = 'manual';
 
+// Safe GA4 wrapper — no-ops if gtag is blocked by an ad blocker.
+function track(event, params) {
+  if (typeof gtag === 'function') gtag('event', event, params || {});
+}
+
 // Chrome mobile bumps scrollY by ~toolbar-height when its toolbar animates back in after we
 // reset to 0 on navigation. We catch this with a debounced visualViewport resize listener:
 // it fires during the animation; we wait for it to settle (50ms of no further resize), then
@@ -1145,5 +1164,16 @@ if (window.visualViewport) {
 // Initial render
 render();
 </script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XEY7YYXZWB"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XEY7YYXZWB');
+</script>
+<!-- Cloudflare Web Analytics -->
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "6fa29e60facd4f7ea028324d4bf69a5c"}'></script>
+<!-- End Cloudflare Web Analytics -->
 </body>
 </html>
